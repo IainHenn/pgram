@@ -1,3 +1,4 @@
+import { error } from 'console';
 import React from 'react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -7,6 +8,7 @@ function SignupComponent(){
     const [name, setName] = useState('');
     const [password, setPassword] = useState('');
     const [email, setEmail] = useState('');
+    const [error, setError] = useState('');
 
     function signupUser(){
         fetch('http://localhost:8080/users', {
@@ -16,10 +18,18 @@ function SignupComponent(){
             },
             body: JSON.stringify({name, password, email})
         })
-        .then(resp => resp.json())
-        .then(data => {
-            console.log("user created!");
-            navigate("/");
+        .then(resp => {
+            if(!resp.ok){
+                return resp.json().then((error) => {
+                    setError('Error bad credentials or an error on the system!');
+                })
+            }
+            else{
+                navigate("/");
+            }
+        })
+        .catch((error) => {
+            alert(error.message);
         })
     }
     
@@ -49,6 +59,7 @@ function SignupComponent(){
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                 />
+                <p className='text-red-500 font-bold'>{error}</p>
                 <button className="block w-full p-2 bg-black text-white rounded hover:bg-black-600" onClick={signupUser}>Sign Up</button>
             </div>
         </div>
