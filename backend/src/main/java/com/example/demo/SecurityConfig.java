@@ -21,7 +21,7 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable()) // Disable CSRF for simplicity (not recommended for production)
             .cors(cors -> {}) // Enable CORS with default configuration
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/me", "/login", "/users", "dashboard").permitAll()
+                .requestMatchers("/api/me", "/api/logout", "/login", "/users", "dashboard").permitAll()
                 .anyRequest().authenticated()
             );
         return http.build();

@@ -94,21 +94,38 @@ public class UserController {
     @GetMapping("/api/me")
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<?> getCurrentUser(HttpServletRequest request) {
-        System.out.println("hello...?");
         try {
             String token = jwtUtil.extractJwtFromCookie(request);
             String username = jwtUtil.extractUsername(token);
             UserDetails user = userDetailsService.loadUserByUsername(username);
-            System.out.println("THIS SUCCEEDED!!!!");
             return ResponseEntity.ok(user);
         }
 
         catch (IllegalArgumentException e) {
-            System.out.println("THIS FAILED!!!!");
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid input: " + e.getMessage());
         } 
         catch (AuthenticationException e) {
-            System.out.println("THIS FAILED!!!!");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Authentication failed: " + e.getMessage());
+        } 
+    }
+    
+    @PostMapping("/api/logout")
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<?> logoutUser(HttpServletResponse response) {
+        try {
+            Cookie cookie = new Cookie("jwt","");
+            cookie.setHttpOnly(true);
+            cookie.setSecure(true);
+            cookie.setPath("/");
+            cookie.setMaxAge(0);
+            response.addCookie(cookie);
+            return ResponseEntity.ok("User logged out successfully!");
+        }
+
+        catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid input: " + e.getMessage());
+        } 
+        catch (AuthenticationException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Authentication failed: " + e.getMessage());
         } 
     }
