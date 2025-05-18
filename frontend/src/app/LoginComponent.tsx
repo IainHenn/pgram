@@ -5,7 +5,7 @@ function LoginComponent(){
     const navigate = useNavigate();
     const [name, setName] = useState('');
     const [password, setPassword] = useState('');
-
+    const [error, setError] = useState('');
 
     const handleClick = () => {
         navigate('/signup');
@@ -17,12 +17,18 @@ function LoginComponent(){
             headers: {
                 'Content-Type': 'application/json'
             },
+            credentials: 'include',
             body: JSON.stringify({name, password})
         })
-        .then((response) => response.text()) // Use .text() to inspect raw response
-        .then((data) => {
-            console.log(data); // Log the raw response
-            return JSON.parse(data); // Parse if valid
+        .then((resp) => {
+            if(!resp.ok){
+                return resp.json().then((error) => {
+                    setError('Error bad credentials or an error on the system!');
+                })
+            }
+            else{
+                navigate("/dashboard");
+            }
         })
         .catch((error) => {
             alert(error.message);
