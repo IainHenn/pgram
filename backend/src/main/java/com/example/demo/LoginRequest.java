@@ -1,7 +1,6 @@
 package com.example.demo;
-import jakarta.persistence.Entity;
 
-@Entity
+
 public class LoginRequest{
     private String name;
     private String password;
