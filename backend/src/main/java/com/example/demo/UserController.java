@@ -12,13 +12,13 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
-
+import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
 @CrossOrigin(origins = "http://localhost:3000")
@@ -65,7 +65,6 @@ public class UserController {
     @PostMapping("/login")
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<?> loginUser(@RequestBody LoginRequest loginRequest, HttpServletResponse response) {
-        System.out.println("Request recieved");
         try {
             Authentication auth = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginRequest.getName(), loginRequest.getPassword())
@@ -90,5 +89,27 @@ public class UserController {
             System.out.println("Error!");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
         }
+    }
+
+    @GetMapping("/api/me")
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<?> getCurrentUser(HttpServletRequest request) {
+        System.out.println("hello...?");
+        try {
+            String token = jwtUtil.extractJwtFromCookie(request);
+            String username = jwtUtil.extractUsername(token);
+            UserDetails user = userDetailsService.loadUserByUsername(username);
+            System.out.println("THIS SUCCEEDED!!!!");
+            return ResponseEntity.ok(user);
+        }
+
+        catch (IllegalArgumentException e) {
+            System.out.println("THIS FAILED!!!!");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid input: " + e.getMessage());
+        } 
+        catch (AuthenticationException e) {
+            System.out.println("THIS FAILED!!!!");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Authentication failed: " + e.getMessage());
+        } 
     }
 }

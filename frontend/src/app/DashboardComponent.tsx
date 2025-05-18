@@ -1,8 +1,31 @@
 import React from 'react';
 import { useNavigate, Link} from 'react-router-dom';
 import { useState, useEffect } from 'react';
+import { error } from 'console';
 
 function DashboardComponent(){
+    
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        fetch("http://localhost:8080/api/me", {
+            method: 'GET',
+            credentials: "include",
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(resp => {
+            if(!resp.ok){
+                console.log("bruh");
+                throw new Error("User not authenticated!");
+            }
+            return resp.json()
+        })
+        .catch((error) => {
+            navigate('/');
+        })
+    }, [navigate]);
 
     return (
         <>
