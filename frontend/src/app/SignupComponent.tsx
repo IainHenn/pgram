@@ -29,7 +29,7 @@ function SignupComponent(){
             }
         })
         .catch((error) => {
-            alert(error.message);
+            setError('Error bad credentials or an error on the system!');
         })
     }
     

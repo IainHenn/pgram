@@ -49,9 +49,8 @@ function DashboardComponent(){
     return (
         <>
             <nav className="bg-gray-300 text-white p-4 flex items-center justify-between">
-            <div className="text-xl text-gray-800 font-bold">Pictogram</div>
                 <div className="space-x-4 hidden md:flex">
-                    <Link to="/dashboard" className="text-gray-800 hover:underline">Home</Link>
+                    <Link to="/dashboard" className="text-gray-800 hover:underline font-bold">Pictogram</Link>
                 </div>
             <button className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-red-600" onClick={signOut}>Sign Out</button>
             </nav>

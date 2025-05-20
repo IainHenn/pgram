@@ -31,7 +31,7 @@ function LoginComponent(){
             }
         })
         .catch((error) => {
-            alert(error.message);
+            setError('Error bad credentials or an error on the system!');
         });
     }
 
@@ -52,6 +52,7 @@ function LoginComponent(){
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                 />
+                <p className='text-red-500 font-bold'>{error}</p>
                 <button className="block w-full p-2 bg-blue-500 text-white rounded hover:bg-blue-600" onClick={loginUser}>Login</button>
                 <button className="block w-full p-2 bg-black text-white rounded hover:bg-black-600" onClick={handleClick}>Sign Up</button>
             </div>
