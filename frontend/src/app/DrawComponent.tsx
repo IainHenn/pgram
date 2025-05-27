@@ -161,11 +161,11 @@ const DrawComponent: React.FC = () => {
                     </button>
 
                     <button>
-                        <span className="w-40 h-14 absolute top-12 right-0 text-black bg-purple-500 hover:bg-purple-900 focus:ring-4 focus:outline-none focus:ring-red-300 font-bold text-sm p-2.5 text-center flex justify-center inline-flex items-center">Post</span>
+                        <span className="w-40 h-14 absolute top-12 right-0 text-black bg-purple-500 hover:bg-purple-900 focus:ring-4 focus:outline-none focus:ring-red-300 font-bold text-lg p-2.5 text-center flex justify-center inline-flex items-center">Post</span>
                     </button>
 
                     <button>
-                        <span className="w-40 h-14 absolute top-26 right-0 text-black bg-green-500 hover:bg-green-900 focus:ring-4 focus:outline-none focus:ring-red-300 font-bold text-sm p-2.5 text-center flex justify-center inline-flex items-center">Save and Continue</span>
+                        <span className="w-40 h-14 absolute top-26 right-0 text-black bg-purple-500 hover:bg-purple-900 focus:ring-4 focus:outline-none focus:ring-red-300 font-bold text-lg p-2.5 text-center flex justify-center inline-flex items-center">Save and Continue</span>
                     </button>
 
                     <button>
