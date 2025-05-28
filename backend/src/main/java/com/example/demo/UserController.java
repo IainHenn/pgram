@@ -1,5 +1,6 @@
-//import java.util.Map;
 package com.example.demo;
+import java.util.Map;
+import java.util.HashMap;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,10 +17,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 @RestController
 @CrossOrigin(origins = "http://localhost:3000")
@@ -98,6 +100,7 @@ public class UserController {
             String token = jwtUtil.extractJwtFromCookie(request);
             String username = jwtUtil.extractUsername(token);
             UserDetails user = userDetailsService.loadUserByUsername(username);
+            System.out.println(user.getUsername() + " " + user.getPassword());
             return ResponseEntity.ok(user);
         }
 
@@ -107,6 +110,22 @@ public class UserController {
         catch (AuthenticationException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Authentication failed: " + e.getMessage());
         } 
+    }
+
+    @PostMapping("/api/images")
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<?> logUserImage(@AuthenticationPrincipal UserDetails userDetails) {
+        Map<String, String> response = new HashMap<>();
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Object principal = authentication.getPrincipal();
+        System.out.println("Principal: " + principal);
+        System.out.println(userDetails);
+        String username = userDetails.getUsername();
+        String password = userDetails.getPassword();
+        response.put("username", username);
+        response.put("password", password);
+        System.out.println("username" + username + "and password " + password);
+        return new ResponseEntity(response, HttpStatus.OK);
     }
     
     @PostMapping("/api/logout")
