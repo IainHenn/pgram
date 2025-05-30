@@ -22,16 +22,29 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.bind.annotation.RequestParam;
+import java.io.IOException;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import org.springframework.beans.factory.annotation.Autowired;
 
 @RestController
 @CrossOrigin(origins = "http://localhost:3000")
 public class UserController {
+
+    private User findByName(String name) {
+        return repository.findByName(name).orElseThrow(() -> new IllegalArgumentException("User not found"));
+    }
 
     private final UserRepository repository;
     private final JwtUtil jwtUtil;
     private final AuthenticationManager authenticationManager;
     private final UserDetailsService userDetailsService;
     private final PasswordEncoder passwordEncoder;
+    
+    @Autowired
+    private final S3Client s3client = S3Client.create();
 
     public UserController(UserRepository repository, 
                             AuthenticationManager authenticationManager, 
@@ -114,7 +127,10 @@ public class UserController {
 
     @PostMapping("/api/images")
     @ResponseStatus(HttpStatus.OK)
-    public ResponseEntity<?> logUserImage(@AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<?> logUserImage(
+    @AuthenticationPrincipal UserDetails userDetails, 
+    @RequestParam("image") MultipartFile image
+    ) {
         Map<String, String> response = new HashMap<>();
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         Object principal = authentication.getPrincipal();
@@ -122,9 +138,35 @@ public class UserController {
         System.out.println(userDetails);
         String username = userDetails.getUsername();
         String password = userDetails.getPassword();
+        String bucketName = "pgram";
+        String key = "images/" + username + "drawing.png";
         response.put("username", username);
         response.put("password", password);
-        System.out.println("username" + username + "and password " + password);
+        if(image != null){
+            System.out.println("file exists!");
+        }
+
+        try {
+            //Upload image to Amazon S3 SDK
+            PutObjectRequest request = PutObjectRequest.builder()
+                                .bucket(bucketName)
+                                .key(key)
+                                .contentType(image.getContentType())
+                                .build();
+            
+            s3client.putObject(request, software.amazon.awssdk.core.sync.RequestBody.fromBytes(image.getBytes()));
+            
+            //Store S3 URL/Path in DB using username to locate user
+            User user = repository.findByName(userDetails.getUsername()).orElseThrow(() -> new IllegalArgumentException("User not found"));
+            user.setImagePath("https://" + bucketName + ".s3.amazonaws.com/" + key);
+
+        } catch (IOException e) {
+            System.err.println("Error while reading image bytes: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to upload image");
+        }
+
+
+        System.out.println("made it to the end");
         return new ResponseEntity(response, HttpStatus.OK);
     }
     

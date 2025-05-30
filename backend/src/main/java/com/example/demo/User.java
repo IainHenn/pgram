@@ -13,6 +13,7 @@ public class User{
     private String name;
     private String email;
     private String password;
+    private String imagePath;
 
     public String getName(){
         return this.name;
@@ -30,6 +31,10 @@ public class User{
         return this.id;
     }
 
+    public String getImagePath(){
+        return this.imagePath;
+    }
+
     public void setName(String newName){
         this.name = newName;
     }
@@ -44,6 +49,10 @@ public class User{
 
     public void setId(Long newId){
         this.id = newId;
+    }
+
+    public void setImagePath(String newImagePath) {
+        this.imagePath = newImagePath;
     }
 
     @Override

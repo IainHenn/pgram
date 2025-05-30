@@ -45,6 +45,41 @@ const DrawComponent: React.FC = () => {
         });
     }, [navigate]);
 
+    const post = () => {
+
+        const canvas = canvasRef.current;
+        if (canvas) {
+            canvas.toBlob((blob) => {
+                
+                if(!blob){
+                    alert("Failed to save blob as image!");
+                    return;
+                }
+
+                const formData = new FormData();
+                formData.append("image",blob,"user-image.png");
+
+                fetch("http://localhost:8080/api/images", {
+                    method: 'POST',
+                    credentials: "include",
+                    body: formData
+                })
+                .then(resp => {
+                    if (!resp.ok){
+                        throw new Error("Error posting image!");
+                    }
+                    return resp.json()
+                })
+                .then(data => {
+                    console.log(data);
+                })
+                .catch((error) => {
+                    alert(error);
+                })
+            });
+        }
+    }
+
     // Save state - clears stack + sets history with current canvas
     const saveState = () => {
         const canvas = canvasRef.current;
@@ -198,6 +233,7 @@ const DrawComponent: React.FC = () => {
                     borderRadius: '0.25rem',
                     cursor: 'pointer',
                 }}
+                onClick={post}
                 >
                 Post
                 </button>
