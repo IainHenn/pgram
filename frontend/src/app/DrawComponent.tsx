@@ -92,8 +92,25 @@ const DrawComponent: React.FC = () => {
                         } else {
                             return;
                         }
-                    } else {
-                        alert("User hasn't posted");
+                    }
+                    else {
+                        fetch("http://localhost:8080/multipart/drawing", {
+                            method: 'POST',
+                            credentials: "include",
+                            body: formData
+                        })
+                        .then(resp => {
+                            if (!resp.ok){
+                                throw new Error("Error posting image!");
+                            }
+                            return resp.json()
+                        })
+                        .then(data => {
+                            navigate("/dashboard");
+                        })
+                        .catch((error) => {
+                            alert(error);
+                        });
                     }
                 })
             });
