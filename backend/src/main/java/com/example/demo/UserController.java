@@ -1,6 +1,9 @@
 package com.example.demo;
-import java.util.Map;
+import java.io.IOException;
 import java.util.HashMap;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -8,6 +11,8 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -15,28 +20,20 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.multipart.MultipartFile;
+
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.bind.annotation.RequestParam;
-import java.io.IOException;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
-import org.springframework.beans.factory.annotation.Autowired;
 
 @RestController
 @CrossOrigin(origins = "http://localhost:3000")
 public class UserController {
-
-    private User findByName(String name) {
-        return repository.findByName(name).orElseThrow(() -> new IllegalArgumentException("User not found"));
-    }
-
     private final UserRepository repository;
     private final JwtUtil jwtUtil;
     private final AuthenticationManager authenticationManager;
@@ -125,7 +122,7 @@ public class UserController {
         } 
     }
 
-    @PostMapping("/api/images")
+    @PostMapping("/multipart/drawing")
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<?> logUserImage(
     @AuthenticationPrincipal UserDetails userDetails, 
@@ -134,14 +131,10 @@ public class UserController {
         Map<String, String> response = new HashMap<>();
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         Object principal = authentication.getPrincipal();
-        System.out.println("Principal: " + principal);
-        System.out.println(userDetails);
         String username = userDetails.getUsername();
         String password = userDetails.getPassword();
         String bucketName = "pgram";
         String key = "images/" + username + "drawing.png";
-        response.put("username", username);
-        response.put("password", password);
         if(image != null){
             System.out.println("file exists!");
         }
@@ -159,7 +152,7 @@ public class UserController {
             //Store S3 URL/Path in DB using username to locate user
             User user = repository.findByName(userDetails.getUsername()).orElseThrow(() -> new IllegalArgumentException("User not found"));
             user.setImagePath("https://" + bucketName + ".s3.amazonaws.com/" + key);
-
+            repository.save(user);
         } catch (IOException e) {
             System.err.println("Error while reading image bytes: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to upload image");
@@ -168,6 +161,33 @@ public class UserController {
 
         System.out.println("made it to the end");
         return new ResponseEntity(response, HttpStatus.OK);
+    }
+
+    @GetMapping("/api/me/post/status")
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<?> getPostStatus(@AuthenticationPrincipal UserDetails userDetails) {
+        try {
+            Map<String, Boolean> response = new HashMap<>();
+
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            Object principal = authentication.getPrincipal();
+            String username = userDetails.getUsername();
+
+            User user = repository.findByName(username).orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+            if(user.getImagePath() != null){
+                response.put("posted", true);
+            }
+            else {
+                response.put("posted", false);
+            }
+            System.out.println("We succeeded, returning " + response.get("posted"));
+            return ResponseEntity.ok(response);
+        }
+        catch (IllegalArgumentException e) {
+            System.out.println("we failed " + e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Failed to check post status");
+        } 
     }
     
     @PostMapping("/api/logout")

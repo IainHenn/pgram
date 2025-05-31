@@ -13,7 +13,7 @@ public class User{
     private String name;
     private String email;
     private String password;
-    private String imagePath;
+    private String image_path;
 
     public String getName(){
         return this.name;
@@ -32,7 +32,7 @@ public class User{
     }
 
     public String getImagePath(){
-        return this.imagePath;
+        return this.image_path;
     }
 
     public void setName(String newName){
@@ -52,7 +52,7 @@ public class User{
     }
 
     public void setImagePath(String newImagePath) {
-        this.imagePath = newImagePath;
+        this.image_path = newImagePath;
     }
 
     @Override

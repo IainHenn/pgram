@@ -46,7 +46,6 @@ const DrawComponent: React.FC = () => {
     }, [navigate]);
 
     const post = () => {
-
         const canvas = canvasRef.current;
         if (canvas) {
             canvas.toBlob((blob) => {
@@ -59,22 +58,43 @@ const DrawComponent: React.FC = () => {
                 const formData = new FormData();
                 formData.append("image",blob,"user-image.png");
 
-                fetch("http://localhost:8080/api/images", {
-                    method: 'POST',
-                    credentials: "include",
-                    body: formData
+                fetch("http://localhost:8080/api/me/post/status", {
+                    method: 'GET',
+                    credentials: "include"
                 })
                 .then(resp => {
-                    if (!resp.ok){
-                        throw new Error("Error posting image!");
+                    if(!resp.ok) {
+                        throw new Error("Error checking post status");
                     }
-                    return resp.json()
+                    return resp.json();
                 })
                 .then(data => {
-                    console.log(data);
-                })
-                .catch((error) => {
-                    alert(error);
+                    if(data.posted) {
+                        const result = confirm("User has posted already, overwrite previous post for the day?");
+                        if (result) {
+                            fetch("http://localhost:8080/multipart/drawing", {
+                                method: 'POST',
+                                credentials: "include",
+                                body: formData
+                            })
+                            .then(resp => {
+                                if (!resp.ok){
+                                    throw new Error("Error posting image!");
+                                }
+                                return resp.json()
+                            })
+                            .then(data => {
+                                navigate("/dashboard");
+                            })
+                            .catch((error) => {
+                                alert(error);
+                            });
+                        } else {
+                            return;
+                        }
+                    } else {
+                        alert("User hasn't posted");
+                    }
                 })
             });
         }
