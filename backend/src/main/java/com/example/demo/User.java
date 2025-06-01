@@ -3,6 +3,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Column;
 
 @Entity
 @Table(name = "users")
@@ -13,7 +14,8 @@ public class User{
     private String name;
     private String email;
     private String password;
-    private String image_path;
+    @Column(name = "image_path")
+    private String imagePath;
 
     public String getName(){
         return this.name;
@@ -32,7 +34,7 @@ public class User{
     }
 
     public String getImagePath(){
-        return this.image_path;
+        return this.imagePath;
     }
 
     public void setName(String newName){
@@ -52,7 +54,7 @@ public class User{
     }
 
     public void setImagePath(String newImagePath) {
-        this.image_path = newImagePath;
+        this.imagePath = newImagePath;
     }
 
     @Override

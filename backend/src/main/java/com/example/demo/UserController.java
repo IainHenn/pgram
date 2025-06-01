@@ -2,6 +2,7 @@ package com.example.demo;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -30,6 +31,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.ObjectCannedACL;
 
 @RestController
 @CrossOrigin(origins = "http://localhost:3000")
@@ -142,10 +144,11 @@ public class UserController {
         try {
             //Upload image to Amazon S3 SDK
             PutObjectRequest request = PutObjectRequest.builder()
-                                .bucket(bucketName)
-                                .key(key)
-                                .contentType(image.getContentType())
-                                .build();
+                                    .bucket(bucketName)
+                                    .key(key)
+                                    .contentType(image.getContentType())
+                                    .acl(ObjectCannedACL.PUBLIC_READ)
+                                    .build();
             
             s3client.putObject(request, software.amazon.awssdk.core.sync.RequestBody.fromBytes(image.getBytes()));
             
@@ -161,6 +164,15 @@ public class UserController {
 
         System.out.println("made it to the end");
         return new ResponseEntity(response, HttpStatus.OK);
+    }
+
+    @GetMapping("/posts")
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<?> getPosts(){
+        Map<String,List<UserRepository.GetUsernameAndImagePath>> response = new HashMap<>();
+       
+        response.put("result",repository.getUserPosts());
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/api/me/post/status")
