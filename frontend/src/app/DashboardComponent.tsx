@@ -6,7 +6,7 @@ import { error } from 'console';
 const DrawComponent: React.FC<{ username: string; imagePath: string }> = ({ username, imagePath }) => {
     return (
         <div>
-            <h1 className='text-black'>{username}</h1>
+            <h1 className='text-black font-bold'>{username}</h1>
             <a>
                 <img src={imagePath} alt="Failed to fetch user post!" className='text-black'></img>
             </a>
@@ -91,17 +91,31 @@ function DashboardComponent(){
 
     return (
         <>
-            <nav className="bg-gray-300 text-white p-4 flex items-center justify-between">
-                <div className="space-x-4 hidden md:flex">
-                    <Link to="/dashboard" className="text-gray-800 font-bold">Pictogram</Link>
+            <nav className="bg-gray-800 text-white p-4 flex items-center justify-between shadow-lg">
+                <div className="space-x-4 flex items-center">
+                    <Link to="/dashboard" className="text-white text-xl font-bold hover:text-blue-400 transition duration-300">
+                        Pictogram
+                    </Link>
                 </div>
-            <button className='bg-blue-300 text-black px-4 py-2 rounded hover:bg-blue-800' onClick={sendToDraw}>Draw</button>
-            <button className="bg-blue-300 text-black px-4 py-2 rounded hover:bg-red-600" onClick={signOut}>Sign Out</button>
+                <div className="space-x-4 flex items-center">
+                    <button 
+                        className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition duration-300"
+                        onClick={sendToDraw}
+                    >
+                        Draw
+                    </button>
+                    <button 
+                        className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition duration-300"
+                        onClick={signOut}
+                    >
+                        Sign Out
+                    </button>
+                </div>
             </nav>
 
             <div className="bg-white min-h-screen grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
                 {posts.map((post, index) => (
-                    <div key={index} className="border rounded-lg shadow-md p-4 bg-gray-100 h-1/2">
+                    <div key={index} className="border rounded-lg shadow-md p-4 bg-gray-100 h-[40%] w-[90%]">
                         <DrawComponent
                             username={post.username}
                             imagePath={post.imagePath}
