@@ -1,8 +1,8 @@
 package com.example.demo;
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -31,7 +31,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
-import software.amazon.awssdk.services.s3.model.ObjectCannedACL;
 
 @RestController
 @CrossOrigin(origins = "http://localhost:3000")
@@ -136,7 +135,7 @@ public class UserController {
         String username = userDetails.getUsername();
         String password = userDetails.getPassword();
         String bucketName = "pgram";
-        String key = "images/" + username + "drawing.png";
+        String key = "images/" + username + "_" + System.currentTimeMillis() + "_drawing.png";
         if(image != null){
             System.out.println("file exists!");
         }
@@ -147,7 +146,6 @@ public class UserController {
                                     .bucket(bucketName)
                                     .key(key)
                                     .contentType(image.getContentType())
-                                    .acl(ObjectCannedACL.PUBLIC_READ)
                                     .build();
             
             s3client.putObject(request, software.amazon.awssdk.core.sync.RequestBody.fromBytes(image.getBytes()));
