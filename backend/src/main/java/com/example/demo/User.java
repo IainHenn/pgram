@@ -4,6 +4,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.Column;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "users")
@@ -16,6 +17,8 @@ public class User{
     private String password;
     @Column(name = "image_path")
     private String imagePath;
+    @Column(name = "image_time")
+    private LocalDateTime imageTime;
 
     public String getName(){
         return this.name;
@@ -37,6 +40,10 @@ public class User{
         return this.imagePath;
     }
 
+    public LocalDateTime getImageTime() {
+        return this.imageTime;
+    }
+
     public void setName(String newName){
         this.name = newName;
     }
@@ -55,6 +62,10 @@ public class User{
 
     public void setImagePath(String newImagePath) {
         this.imagePath = newImagePath;
+    }
+
+    public void setImageTime(LocalDateTime newImageTime) {
+        this.imageTime = newImageTime;
     }
 
     @Override

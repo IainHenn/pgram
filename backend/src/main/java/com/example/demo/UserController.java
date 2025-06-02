@@ -3,7 +3,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
+import java.time.LocalDateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -153,6 +153,7 @@ public class UserController {
             //Store S3 URL/Path in DB using username to locate user
             User user = repository.findByName(userDetails.getUsername()).orElseThrow(() -> new IllegalArgumentException("User not found"));
             user.setImagePath("https://" + bucketName + ".s3.amazonaws.com/" + key);
+            user.setImageTime(LocalDateTime.now());
             repository.save(user);
         } catch (IOException e) {
             System.err.println("Error while reading image bytes: " + e.getMessage());
