@@ -81,10 +81,9 @@ function DashboardComponent(){
         })
         .then(data => {
             if(data){
-                console.log(data);
                 setPosts(data["result"]);
             } else {
-                console.log("no data bruv");
+                console.log("Failed to find sufficient data");
             }
         });
     }, []);

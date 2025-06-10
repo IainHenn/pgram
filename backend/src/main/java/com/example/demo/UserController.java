@@ -1,9 +1,10 @@
 package com.example.demo;
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.time.LocalDateTime;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -67,11 +68,9 @@ public class UserController {
                 throw new IllegalArgumentException("Email violation occurred");
             }
             user.setPassword(passwordEncoder.encode(user.getPassword()));
-            System.out.println("About to save...");
             return repository.save(user);
         }
         catch (DataIntegrityViolationException e){
-            System.out.println("Error!");
             throw new DataIntegrityViolationException("Data integrity violation occurred");
         }
     }
@@ -89,7 +88,6 @@ public class UserController {
             user.setName(userDetails.getUsername());
             user.setPassword(userDetails.getPassword());
             String token = jwtUtil.generateToken(user);
-            System.out.println("User " + user.getName() + " logged in successfully with token: " + token);
             Cookie cookie = new Cookie("jwt", token);
             cookie.setHttpOnly(true);
             cookie.setSecure(true); // Set to true in production (requires HTTPS)
@@ -111,7 +109,6 @@ public class UserController {
             String token = jwtUtil.extractJwtFromCookie(request);
             String username = jwtUtil.extractUsername(token);
             UserDetails user = userDetailsService.loadUserByUsername(username);
-            System.out.println(user.getUsername() + " " + user.getPassword());
             return ResponseEntity.ok(user);
         }
 
@@ -161,7 +158,6 @@ public class UserController {
         }
 
 
-        System.out.println("made it to the end");
         return new ResponseEntity(response, HttpStatus.OK);
     }
 
@@ -192,11 +188,9 @@ public class UserController {
             else {
                 response.put("posted", false);
             }
-            System.out.println("We succeeded, returning " + response.get("posted"));
             return ResponseEntity.ok(response);
         }
         catch (IllegalArgumentException e) {
-            System.out.println("we failed " + e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Failed to check post status");
         } 
     }
