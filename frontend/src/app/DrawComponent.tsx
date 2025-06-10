@@ -45,6 +45,78 @@ const DrawComponent: React.FC = () => {
         });
     }, [navigate]);
 
+    const post = () => {
+        const canvas = canvasRef.current;
+        if (canvas) {
+            canvas.toBlob((blob) => {
+                
+                if(!blob){
+                    alert("Failed to save blob as image!");
+                    return;
+                }
+
+                const formData = new FormData();
+                formData.append("image",blob,"user-image.png");
+
+                fetch("http://localhost:8080/api/me/post/status", {
+                    method: 'GET',
+                    credentials: "include"
+                })
+                .then(resp => {
+                    if(!resp.ok) {
+                        throw new Error("Error checking post status");
+                    }
+                    return resp.json();
+                })
+                .then(data => {
+                    if(data.posted) {
+                        const result = confirm("User has posted already, overwrite previous post for the day?");
+                        if (result) {
+                            fetch("http://localhost:8080/multipart/drawing", {
+                                method: 'POST',
+                                credentials: "include",
+                                body: formData
+                            })
+                            .then(resp => {
+                                if (!resp.ok){
+                                    throw new Error("Error posting image!");
+                                }
+                                return resp.json()
+                            })
+                            .then(data => {
+                                navigate("/dashboard");
+                            })
+                            .catch((error) => {
+                                alert(error);
+                            });
+                        } else {
+                            return;
+                        }
+                    }
+                    else {
+                        fetch("http://localhost:8080/multipart/drawing", {
+                            method: 'POST',
+                            credentials: "include",
+                            body: formData
+                        })
+                        .then(resp => {
+                            if (!resp.ok){
+                                throw new Error("Error posting image!");
+                            }
+                            return resp.json()
+                        })
+                        .then(data => {
+                            navigate("/dashboard");
+                        })
+                        .catch((error) => {
+                            alert(error);
+                        });
+                    }
+                })
+            });
+        }
+    }
+
     // Save state - clears stack + sets history with current canvas
     const saveState = () => {
         const canvas = canvasRef.current;
@@ -95,6 +167,7 @@ const DrawComponent: React.FC = () => {
         }
     };
 
+    // Clear the drawing
     const clear = () => {
         const canvas = canvasRef.current;
         if (canvas && context) {
@@ -155,54 +228,180 @@ const DrawComponent: React.FC = () => {
     return (
         <>
             {!collapsed && (
-                <div style={{ position: 'absolute', top: '20px', height: '150px', right: '20px', width: '10rem', padding: '1rem', backgroundColor: 'rgba(0, 0, 0, 0.3)', borderRadius: '0.5rem', boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)', zIndex: 1000 }}>
-                    <button>
-                        <span className="w-40 absolute top-0 right-0 text-black bg-blue-300 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-red-300 font-bold text-lg p-2.5 text-center flex justify-center inline-flex items-center rounded-t" onClick={() => setCollapsed(!collapsed)}>&uarr;</span>
-                    </button>
-
-                    <button>
-                        <span className="w-40 h-14 absolute top-12 right-0 text-black bg-purple-500 hover:bg-purple-900 focus:ring-4 focus:outline-none focus:ring-red-300 font-bold text-lg p-2.5 text-center flex justify-center inline-flex items-center">Post</span>
-                    </button>
-
-                    <button>
-                        <span className="w-40 h-14 absolute top-26 right-0 text-black bg-purple-500 hover:bg-purple-900 focus:ring-4 focus:outline-none focus:ring-red-300 font-bold text-lg p-2.5 text-center flex justify-center inline-flex items-center">Save and Continue</span>
-                    </button>
-
-                    <button>
-                        <span className="w-40 h-14 absolute top-40 right-0 text-black bg-white-500 hover:bg-blue-900 focus:ring-4 focus:outline-none focus:ring-red-300 font-bold text-lg p-2.5 text-center flex justify-center inline-flex items-center" onClick={undo}>Undo</span>
-                    </button>
-
-                    <button>
-                        <span className="w-40 h-14 absolute top-54 right-0 text-black bg-white-500 hover:bg-blue-900 focus:ring-4 focus:outline-none focus:ring-red-300 font-bold text-lg p-2.5 text-center flex justify-center inline-flex items-center" onClick={redo}>Redo</span>
-                    </button>
-
-                    <button>
-                        <span className="w-40 h-14 absolute top-68 right-0 text-black bg-white-500 hover:bg-blue-900 focus:ring-4 focus:outline-none focus:ring-red-300 font-bold text-lg p-2.5 text-center flex justify-center inline-flex items-center" onClick={clear}>Clear</span>
-                    </button>
-
-                    <button>
-                        <span className="w-40 h-14 absolute top-82 right-0 text-black bg-red-500 hover:bg-red-900 focus:ring-4 focus:outline-none focus:ring-red-300 font-bold text-lg p-2.5 text-center flex justify-center inline-flex items-center rounded-b" onClick={leaveDraw}>Exit</span>
-                    </button>
+            <div
+                style={{
+                position: 'absolute',
+                top: '20px',
+                right: '20px',
+                width: '12rem',
+                padding: '1rem',
+                backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                borderRadius: '0.5rem',
+                boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
+                zIndex: 1000,
+                color: 'white',
+                }}
+            >
+                <button
+                style={{
+                    display: 'block',
+                    marginBottom: '0.5rem',
+                    width: '100%',
+                    padding: '0.5rem',
+                    backgroundColor: '#007BFF',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '0.25rem',
+                    cursor: 'pointer',
+                }}
+                onClick={() => setCollapsed(!collapsed)}
+                >
+                Collapse
+                </button>
+                <button
+                style={{
+                    display: 'block',
+                    marginBottom: '0.5rem',
+                    width: '100%',
+                    padding: '0.5rem',
+                    backgroundColor: '#6C757D',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '0.25rem',
+                    cursor: 'pointer',
+                }}
+                onClick={post}
+                >
+                Post
+                </button>
+                <button
+                style={{
+                    display: 'block',
+                    marginBottom: '0.5rem',
+                    width: '100%',
+                    padding: '0.5rem',
+                    backgroundColor: '#28A745',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '0.25rem',
+                    cursor: 'pointer',
+                }}
+                >
+                Save and Continue
+                </button>
+                <button
+                style={{
+                    display: 'block',
+                    marginBottom: '0.5rem',
+                    width: '100%',
+                    padding: '0.5rem',
+                    backgroundColor: '#FFC107',
+                    color: 'black',
+                    border: 'none',
+                    borderRadius: '0.25rem',
+                    cursor: 'pointer',
+                }}
+                onClick={undo}
+                >
+                Undo
+                </button>
+                <button
+                style={{
+                    display: 'block',
+                    marginBottom: '0.5rem',
+                    width: '100%',
+                    padding: '0.5rem',
+                    backgroundColor: '#17A2B8',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '0.25rem',
+                    cursor: 'pointer',
+                }}
+                onClick={redo}
+                >
+                Redo
+                </button>
+                <button
+                style={{
+                    display: 'block',
+                    marginBottom: '0.5rem',
+                    width: '100%',
+                    padding: '0.5rem',
+                    backgroundColor: '#DC3545',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '0.25rem',
+                    cursor: 'pointer',
+                }}
+                onClick={clear}
+                >
+                Clear
+                </button>
+                <button
+                style={{
+                    display: 'block',
+                    width: '100%',
+                    padding: '0.5rem',
+                    backgroundColor: '#343A40',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '0.25rem',
+                    cursor: 'pointer',
+                }}
+                onClick={leaveDraw}
+                >
+                Exit
+                </button>
+            </div>
+            )}
+            <div className="bg-light min-h-screen" style={{ padding: '1rem', backgroundColor: 'white' }}>
+            {collapsed && (
+                <div
+                style={{
+                    position: 'absolute',
+                    top: '20px',
+                    right: '20px',
+                    width: '12rem',
+                    padding: '1rem',
+                    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                    borderRadius: '0.5rem',
+                    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
+                    color: 'white',
+                }}
+                >
+                <button
+                    style={{
+                    display: 'block',
+                    width: '100%',
+                    padding: '0.5rem',
+                    backgroundColor: '#007BFF',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '0.25rem',
+                    cursor: 'pointer',
+                    }}
+                    onClick={() => setCollapsed(!collapsed)}
+                >
+                    Expand
+                </button>
                 </div>
             )}
-            <div className="bg-white min-h-screen">
-                {collapsed && (
-                    <div style={{ position: 'absolute', top: '20px', height: '300px', right: '20px', width: '10rem', padding: '1rem' }}>
-                        <button>
-                            <span className="w-40 absolute top-0 right-0 text-black bg-blue-300 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-red-300 font-bold text-lg p-2.5 text-center flex justify-center inline-flex items-center rounded-t" onClick={() => setCollapsed(!collapsed)}>&darr;</span>
-                        </button>
-                    </div>
-                )}
-                <canvas
-                    ref={canvasRef}
-                    width={1400}
-                    height={800}
-                    style={{ border: '1px solid black', cursor: 'crosshair' }}
-                    onMouseDown={startDrawing}
-                    onMouseMove={draw}
-                    onMouseUp={stopDrawing}
-                    onMouseLeave={stopDrawing}
-                />
+            <canvas
+                ref={canvasRef}
+                width={1400}
+                height={800}
+                style={{
+                border: '2px solid #343A40',
+                borderRadius: '0.5rem',
+                cursor: 'crosshair',
+                display: 'block',
+                margin: '0 auto',
+                }}
+                onMouseDown={startDrawing}
+                onMouseMove={draw}
+                onMouseUp={stopDrawing}
+                onMouseLeave={stopDrawing}
+            />
             </div>
         </>
     );
