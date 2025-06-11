@@ -26,6 +26,10 @@ function DashboardComponent(){
         navigate('/draw');
     }
 
+    const sendToProfile = () => {
+        navigate('/profile');
+    }
+
     function signOut(){
         fetch("http://localhost:8080/api/logout", {
             method: 'POST',
@@ -97,6 +101,12 @@ function DashboardComponent(){
                     </Link>
                 </div>
                 <div className="space-x-4 flex items-center">
+                    <button 
+                        className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition duration-300"
+                        onClick={sendToProfile}
+                    >
+                        Profile
+                    </button>
                     <button 
                         className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition duration-300"
                         onClick={sendToDraw}
