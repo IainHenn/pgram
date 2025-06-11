@@ -74,6 +74,16 @@ public class UserController {
             throw new DataIntegrityViolationException("Data integrity violation occurred");
         }
     }
+    
+    @GetMapping("/users/self")
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<?> fetchProfile(@AuthenticationPrincipal UserDetails userDetails) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Object principal = authentication.getPrincipal();
+        String username = userDetails.getUsername();
+        User user = repository.findByName(username).orElseThrow(() -> new IllegalArgumentException("User not found"));
+        return ResponseEntity.ok(user);
+    }
 
     @PostMapping("/login")
     @ResponseStatus(HttpStatus.OK)
