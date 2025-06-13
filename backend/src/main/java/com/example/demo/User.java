@@ -19,6 +19,8 @@ public class User{
     private String imagePath;
     @Column(name = "image_time")
     private LocalDateTime imageTime;
+    private String bio;
+
 
     public String getName(){
         return this.name;
@@ -44,6 +46,10 @@ public class User{
         return this.imageTime;
     }
 
+    public String getBio() {
+        return this.bio;
+    }
+
     public void setName(String newName){
         this.name = newName;
     }
@@ -66,6 +72,10 @@ public class User{
 
     public void setImageTime(LocalDateTime newImageTime) {
         this.imageTime = newImageTime;
+    }
+
+    public void setBio(String newBio) {
+        this.bio = newBio;
     }
 
     @Override

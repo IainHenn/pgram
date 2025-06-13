@@ -137,3 +137,4 @@ function DashboardComponent(){
 };
 
 export default DashboardComponent;
+export { DrawComponent };

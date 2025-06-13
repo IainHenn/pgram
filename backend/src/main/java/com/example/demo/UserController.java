@@ -21,6 +21,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -83,6 +84,44 @@ public class UserController {
         String username = userDetails.getUsername();
         User user = repository.findByName(username).orElseThrow(() -> new IllegalArgumentException("User not found"));
         return ResponseEntity.ok(user);
+    }
+
+    @PatchMapping("/users/self")
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<?> updateProfile(@AuthenticationPrincipal UserDetails userDetails, 
+    @RequestBody User user, HttpServletResponse response){
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Object principal = authentication.getPrincipal();
+        String username = userDetails.getUsername();
+        User originalUser = repository.findByName(username).orElseThrow(() -> new IllegalArgumentException("User not found"));
+        String bio = originalUser.getBio();
+        String newUsername = user.getName();
+        String newBio = user.getBio();
+
+        if(repository.findByName(newUsername).isPresent() && !username.equals(newUsername)){
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("Username already exists");
+        }
+
+        else {
+            if(newUsername != null){
+                originalUser.setName(newUsername);
+                String token = jwtUtil.generateToken(originalUser);
+                Cookie cookie = new Cookie("jwt", token);
+                cookie.setHttpOnly(true);
+                cookie.setSecure(true); // Set to true in production (requires HTTPS)
+                cookie.setPath("/");
+                cookie.setMaxAge(24 * 60 * 60);
+                response.addCookie(cookie);
+            }
+            
+            if(newBio != null){
+                originalUser.setBio(newBio);
+            }
+
+            repository.save(originalUser);
+
+            return ResponseEntity.ok(HttpStatus.OK);
+        }
     }
 
     @PostMapping("/login")
