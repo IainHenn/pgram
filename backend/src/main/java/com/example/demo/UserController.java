@@ -37,7 +37,8 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 @RestController
 @CrossOrigin(origins = "http://localhost:3000")
 public class UserController {
-    private final UserRepository repository;
+    private final UserRepository userRepository;
+    private final PostRepository postRepository; // Ensure PostRepository extends CrudRepository<Post, Long> or JpaRepository<Post, Long>
     private final JwtUtil jwtUtil;
     private final AuthenticationManager authenticationManager;
     private final UserDetailsService userDetailsService;
@@ -46,12 +47,14 @@ public class UserController {
     @Autowired
     private final S3Client s3client = S3Client.create();
 
-    public UserController(UserRepository repository, 
+    public UserController(UserRepository userRepository,
+                            PostRepository postRepository, 
                             AuthenticationManager authenticationManager, 
                             UserDetailsService userDetailsService, 
                             JwtUtil jwtUtil, 
                             PasswordEncoder passwordEncoder) {
-        this.repository = repository;
+        this.userRepository = userRepository;
+        this.postRepository = postRepository;
         this.authenticationManager = authenticationManager;
         this.userDetailsService = userDetailsService;
         this.jwtUtil = jwtUtil;
@@ -69,7 +72,7 @@ public class UserController {
                 throw new IllegalArgumentException("Email violation occurred");
             }
             user.setPassword(passwordEncoder.encode(user.getPassword()));
-            return repository.save(user);
+            return userRepository.save(user);
         }
         catch (DataIntegrityViolationException e){
             throw new DataIntegrityViolationException("Data integrity violation occurred");
@@ -82,7 +85,7 @@ public class UserController {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         Object principal = authentication.getPrincipal();
         String username = userDetails.getUsername();
-        User user = repository.findByName(username).orElseThrow(() -> new IllegalArgumentException("User not found"));
+        User user = userRepository.findByName(username).orElseThrow(() -> new IllegalArgumentException("User not found"));
         return ResponseEntity.ok(user);
     }
 
@@ -93,12 +96,12 @@ public class UserController {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         Object principal = authentication.getPrincipal();
         String username = userDetails.getUsername();
-        User originalUser = repository.findByName(username).orElseThrow(() -> new IllegalArgumentException("User not found"));
+        User originalUser = userRepository.findByName(username).orElseThrow(() -> new IllegalArgumentException("User not found"));
         String bio = originalUser.getBio();
         String newUsername = user.getName();
         String newBio = user.getBio();
 
-        if(repository.findByName(newUsername).isPresent() && !username.equals(newUsername)){
+        if(userRepository.findByName(newUsername).isPresent() && !username.equals(newUsername)){
             return ResponseEntity.status(HttpStatus.CONFLICT).body("Username already exists");
         }
 
@@ -118,7 +121,7 @@ public class UserController {
                 originalUser.setBio(newBio);
             }
 
-            repository.save(originalUser);
+            userRepository.save(originalUser);
 
             return ResponseEntity.ok(HttpStatus.OK);
         }
@@ -197,25 +200,25 @@ public class UserController {
             s3client.putObject(request, software.amazon.awssdk.core.sync.RequestBody.fromBytes(image.getBytes()));
             
             //Store S3 URL/Path in DB using username to locate user
-            User user = repository.findByName(userDetails.getUsername()).orElseThrow(() -> new IllegalArgumentException("User not found"));
-            user.setImagePath("https://" + bucketName + ".s3.amazonaws.com/" + key);
-            user.setImageTime(LocalDateTime.now());
-            repository.save(user);
+            User user = userRepository.findByName(userDetails.getUsername()).orElseThrow(() -> new IllegalArgumentException("User not found"));
+            String userPostPath = ("https://" + bucketName + ".s3.amazonaws.com/" + key);
+            Post userPost = new Post(user, userPostPath, LocalDateTime.now());
+            postRepository.save(userPost);
         } catch (IOException e) {
             System.err.println("Error while reading image bytes: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to upload image");
         }
 
 
-        return new ResponseEntity(response, HttpStatus.OK);
+        return new ResponseEntity<Map<String, String>>(response, HttpStatus.OK);
     }
 
     @GetMapping("/posts")
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<?> getPosts(){
-        Map<String,List<UserRepository.GetUsernameAndImagePath>> response = new HashMap<>();
+        Map<String,List<PostRepository.GetUsernameAndImagePath>> response = new HashMap<>();
        
-        response.put("result",repository.getUserPosts());
+        response.put("result",postRepository.getUserPosts());
         return ResponseEntity.ok(response);
     }
 
@@ -229,7 +232,7 @@ public class UserController {
             Object principal = authentication.getPrincipal();
             String username = userDetails.getUsername();
 
-            User user = repository.findByName(username).orElseThrow(() -> new IllegalArgumentException("User not found"));
+            User user = userRepository.findByName(username).orElseThrow(() -> new IllegalArgumentException("User not found"));
 
             if(user.getImagePath() != null){
                 response.put("posted", true);
