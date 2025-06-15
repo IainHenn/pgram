@@ -86,7 +86,7 @@ public class UserController {
         Object principal = authentication.getPrincipal();
         String username = userDetails.getUsername();
         User user = userRepository.findByName(username).orElseThrow(() -> new IllegalArgumentException("User not found"));
-        return ResponseEntity.ok(user);
+        return ResponseEntity.ok(userRepository.GetUserInfo(user));
     }
 
     @PatchMapping("/users/self")
@@ -233,8 +233,9 @@ public class UserController {
             String username = userDetails.getUsername();
 
             User user = userRepository.findByName(username).orElseThrow(() -> new IllegalArgumentException("User not found"));
+            List<Post> userPosts = postRepository.findByUser(user);
 
-            if(user.getImagePath() != null){
+            if(userPosts.size() > 0){
                 response.put("posted", true);
             }
             else {

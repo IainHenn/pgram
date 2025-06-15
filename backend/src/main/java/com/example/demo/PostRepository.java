@@ -1,6 +1,5 @@
 package com.example.demo;
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -14,6 +13,11 @@ public interface PostRepository extends JpaRepository<Post, Long> {
         String getImagePath();
     }
 
-    @Query("SELECT u.name as username, p.imagePath as imagePath FROM Post p JOIN p.user u WHERE p.imagePath IS NOT NULL ORDER BY p.imageTime")
+    List<Post> findByUser(User user);
+
+    @Query("SELECT u.name as username, p.imagePath as imagePath " +
+    "FROM Post p JOIN p.user u " +
+    "WHERE p.imagePath IS NOT NULL AND " +
+    "p.imageTime = (SELECT MAX(p2.imageTime) FROM Post p2 WHERE p2.user = u AND p2.imagePath IS NOT NULL)")
     public List<GetUsernameAndImagePath> getUserPosts();
 }

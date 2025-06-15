@@ -56,8 +56,8 @@ const ProfileComponent: React.FC = () => {
             return resp.json();
         })
         .then(data => {
-            console.log(data);
-            setUsername(data.name);
+            console.log("Fetched data:", data);
+            setUsername(data.username);
             setBio(data.bio);
             setImagePath(data.imagePath);
         })
