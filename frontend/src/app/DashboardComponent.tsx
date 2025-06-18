@@ -5,12 +5,80 @@ import { error } from 'console';
 import InfiniteScroll from 'react-infinite-scroll-component';
 
 
-const DrawComponent: React.FC<{ username: string; imagePath: string }> = ({ username, imagePath }) => {
+interface DrawComponentProps {
+    username: string;
+    imagePath: string;
+    postId: number;
+    deleteable: boolean;
+    onDelete?: (postId: number) => void;
+}
+
+const DrawComponent: React.FC<DrawComponentProps> = ({ username, imagePath, postId, deleteable, onDelete }) => {
+    const [showOptions, setShowOptions] = useState<boolean | "deleted">(false);
+
+    const handleOptionsClick = () => {
+        setShowOptions((prev) => !prev);
+    };
+
     return (
-        <div>
-            <h1 className='text-black font-bold'>{username}</h1>
+        <div className="relative">
+            <div className="flex items-center justify-between mb-2">
+                <h1 className='text-black font-bold'>{username}</h1>
+                {deleteable && (
+                    <div className="relative">
+                        <button
+                            className="bg-gray-500 font-bold rounded-full p-3 hover:bg-gray-700 transition"
+                            aria-label="Options"
+                            onClick={handleOptionsClick}
+                        >
+                            <span className="text-2xl font-bold" title="Options">&#8942;</span>
+                        </button>
+                        {showOptions && (
+                            <div className="absolute right-0 mt-2 w-32 bg-white border rounded shadow-lg z-10">
+                                {showOptions === "deleted" ? (
+                                    <div className="px-4 py-2 text-green-600">Post Deleted</div>
+                                ) : (
+                                    <button
+                                        className="block w-full text-left px-4 py-2 rounded text-red-600 hover:bg-gray-100"
+                                        onClick={() => {
+                                            let confirmDelete = confirm('Are you sure you would like to delete this post?');
+                                            if (confirmDelete) {
+                                                fetch(`http://localhost:8080/posts/${postId}`, {
+                                                    method: 'DELETE',
+                                                    credentials: "include",
+                                                    headers: {
+                                                        'Content-Type': 'application/json'
+                                                    }
+                                                })
+                                                .then(resp => {
+                                                    if (resp.status !== 204) {
+                                                        throw new Error("Failed to delete post!");
+                                                    }
+                                                    setShowOptions("deleted");
+                                                    if (onDelete) {
+                                                        onDelete(postId);
+                                                    }
+                                                    setTimeout(() => setShowOptions(false), 6000);
+                                                })
+                                                .catch((error) => {
+                                                    alert(`Error! ${error}`);
+                                                    setShowOptions(false);
+                                                });
+                                            } else {
+                                                setShowOptions(false);
+                                            }
+                                        }}
+                                    >
+                                        Delete
+                                    </button>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                )}
+            </div>
             <a>
-                <img src={imagePath} alt="Failed to fetch user post!" className='text-black'></img>
+                <img src={imagePath} alt="Failed to fetch user post!" className='text-black' />
             </a>
         </div>
     );
@@ -20,13 +88,18 @@ function DashboardComponent(){
     interface Post {
         username: string; 
         imagePath: string;
+        id: string;
     }
-    const [items, setItems] = useState([]);
     const [pageNum, setPageNum] = useState(-1);
     const [dataAvailable, setDataAvailable] = useState(true);
     const [posts, setPosts] = useState<Post[]>([]);
     const navigate = useNavigate();
+    const [userLoggedIn, setUserLoggedIn] = useState("");
 
+
+    const handleDeletePost = (postId: number) => {
+        setPosts(prevPosts => prevPosts.filter(post => Number(post.id) !== postId));
+    };
 
     const sendToDraw = () => {
         navigate('/draw');
@@ -75,8 +148,30 @@ function DashboardComponent(){
         })
     }, [navigate]);
 
+    useEffect(() => {
+        fetch("http://localhost:8080/users/self", {
+            method: 'GET',
+            credentials: "include",
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(resp => {
+            if(!resp.ok){
+                throw new Error("User not authenticated!");
+            }
+            return resp.json()
+        })
+        .then(data => {
+            console.log(data);
+            setUserLoggedIn(data.username);
+        })
+    }, []);
+
+
     const fetchData = () => {
-        fetch(`http://localhost:8080/posts?page=${pageNum + 1}&size=6`, {
+        const nextPage = pageNum + 1;
+        fetch(`http://localhost:8080/posts?page=${nextPage}&size=6`, {
             method: 'GET',
             credentials: "include",
             headers: {
@@ -94,7 +189,7 @@ function DashboardComponent(){
                 console.log(data);
                 if (data && data.content && data.content.length > 0) {
                     setPosts(prev => [...prev, ...data.content]);
-                    setPageNum(prev => prev + 1);
+                    setPageNum(nextPage);
                 } else {
                     setDataAvailable(false);
                 }            
@@ -106,8 +201,28 @@ function DashboardComponent(){
     };
 
     useEffect(() => {
-        fetchData();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+        fetch(`http://localhost:8080/posts?page=0&size=6`, {
+            method: 'GET',
+            credentials: "include",
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(resp => {
+            if(!resp.ok){
+                console.log("Failed to fetch posts");
+            }
+            return resp.json();
+        })
+        .then(data => {
+            if(data && data.content && data.content.length > 0) {
+                setPosts(data.content);
+                setPageNum(0);
+            } else {
+                setDataAvailable(false);
+            }
+        })
+        .catch(() => setDataAvailable(false));
     }, []);
 
     return (
@@ -156,6 +271,9 @@ function DashboardComponent(){
                             <DrawComponent
                                 username={post.username}
                                 imagePath={post.imagePath}
+                                postId={Number(post.id)}
+                                deleteable={userLoggedIn === post.username}
+                                onDelete={handleDeletePost}
                             />
                         </div>
                     ))}
