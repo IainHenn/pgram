@@ -4,6 +4,8 @@ import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 //import org.springframework.data.jpa.repository.Query;
 
 @Repository
@@ -19,5 +21,5 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     "FROM Post p JOIN p.user u " +
     "WHERE p.imagePath IS NOT NULL AND " +
     "p.imageTime = (SELECT MAX(p2.imageTime) FROM Post p2 WHERE p2.user = u AND p2.imagePath IS NOT NULL)")
-    public List<GetUsernameAndImagePath> getUserPosts();
+    public Page<GetUsernameAndImagePath> getUserPosts(Pageable pageable);
 }

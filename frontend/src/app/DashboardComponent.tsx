@@ -2,6 +2,8 @@ import React from 'react';
 import { useNavigate, Link} from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { error } from 'console';
+import InfiniteScroll from 'react-infinite-scroll-component';
+
 
 const DrawComponent: React.FC<{ username: string; imagePath: string }> = ({ username, imagePath }) => {
     return (
@@ -19,8 +21,12 @@ function DashboardComponent(){
         username: string; 
         imagePath: string;
     }
+    const [items, setItems] = useState([]);
+    const [pageNum, setPageNum] = useState(-1);
+    const [dataAvailable, setDataAvailable] = useState(true);
     const [posts, setPosts] = useState<Post[]>([]);
     const navigate = useNavigate();
+
 
     const sendToDraw = () => {
         navigate('/draw');
@@ -69,8 +75,8 @@ function DashboardComponent(){
         })
     }, [navigate]);
 
-    useEffect(() => {
-        fetch("http://localhost:8080/posts", {
+    const fetchData = () => {
+        fetch(`http://localhost:8080/posts?page=${pageNum + 1}&size=6`, {
             method: 'GET',
             credentials: "include",
             headers: {
@@ -85,11 +91,23 @@ function DashboardComponent(){
         })
         .then(data => {
             if(data){
-                setPosts(data["result"]);
+                console.log(data);
+                if (data && data.content && data.content.length > 0) {
+                    setPosts(prev => [...prev, ...data.content]);
+                    setPageNum(prev => prev + 1);
+                } else {
+                    setDataAvailable(false);
+                }            
             } else {
                 console.log("Failed to find sufficient data");
             }
-        });
+        })
+        .catch(() => setDataAvailable(false));
+    };
+
+    useEffect(() => {
+        fetchData();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     return (
@@ -122,16 +140,27 @@ function DashboardComponent(){
                 </div>
             </nav>
 
-            <div className="bg-white min-h-screen grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
-                {posts.map((post, index) => (
-                    <div key={index} className="border rounded-lg shadow-md p-4 bg-gray-100 h-[40%] w-[90%]">
-                        <DrawComponent
-                            username={post.username}
-                            imagePath={post.imagePath}
-                        />
+            <InfiniteScroll
+                dataLength={posts.length}
+                next={fetchData}
+                hasMore={dataAvailable}
+                loader={
+                    <div className="bg-white min-h-screen flex justify-center items-center py-8">
+                        <div className="w-12 h-12 border-4 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
                     </div>
-                ))}
-            </div>
+                }
+            >
+                <div className="bg-white min-h-screen grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 p-4">
+                    {posts.map((post, index) => (
+                        <div key={index} className="border rounded-lg shadow-md p-4 bg-gray-100 h-[100%] w-[90%]">
+                            <DrawComponent
+                                username={post.username}
+                                imagePath={post.imagePath}
+                            />
+                        </div>
+                    ))}
+                </div>
+            </InfiniteScroll>
         </>
     );  
 };

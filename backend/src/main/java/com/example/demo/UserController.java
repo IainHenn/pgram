@@ -28,11 +28,15 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.example.demo.PostRepository.GetUsernameAndImagePath;
+
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 @RestController
 @CrossOrigin(origins = "http://localhost:3000")
@@ -215,11 +219,9 @@ public class UserController {
 
     @GetMapping("/posts")
     @ResponseStatus(HttpStatus.OK)
-    public ResponseEntity<?> getPosts(){
-        Map<String,List<PostRepository.GetUsernameAndImagePath>> response = new HashMap<>();
-       
-        response.put("result",postRepository.getUserPosts());
-        return ResponseEntity.ok(response);
+    public Page<GetUsernameAndImagePath> getPosts(Pageable pageable){
+        System.out.println("result " + postRepository.getUserPosts(pageable));
+        return postRepository.getUserPosts(pageable);
     }
 
     @GetMapping("/api/me/post/status")
