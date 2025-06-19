@@ -16,6 +16,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     }
 
     Optional<User> findByName(String name);
+    Optional<User> findByEmail(String email);
 
     @Query("SELECT u.name as username, u.bio as bio, p.imagePath as imagePath " +
        "FROM Post p JOIN p.user u " +

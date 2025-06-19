@@ -44,7 +44,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 @CrossOrigin(origins = "http://localhost:3000")
 public class UserController {
     private final UserRepository userRepository;
-    private final PostRepository postRepository; // Ensure PostRepository extends CrudRepository<Post, Long> or JpaRepository<Post, Long>
+    private final PostRepository postRepository;
     private final JwtUtil jwtUtil;
     private final AuthenticationManager authenticationManager;
     private final UserDetailsService userDetailsService;
