@@ -10,27 +10,36 @@ function SignupComponent(){
     const [email, setEmail] = useState('');
     const [error, setError] = useState('');
 
-    function signupUser(){
-        fetch('http://localhost:8080/users', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({name, password, email})
-        })
-        .then(resp => {
-            if(!resp.ok){
-                return resp.json().then((error) => {
-                    setError('Error bad credentials or an error on the system!');
-                })
+    async function signupUser() {
+        try {
+            const resp1 = await fetch('http://localhost:8080/users', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ name, password, email })
+            });
+
+            if (resp1.status !== 201) {
+                await resp1.json();
+                setError('Error bad credentials or an error on the system!');
+                return;
             }
-            else{
-                navigate("/");
+
+            const resp2 = await fetch(`http://localhost:8080/generate-token?email=${email}`, {
+                method: 'POST'
+            });
+
+            if (!resp2.ok) {
+                await resp2.json();
+                setError('Error bad credentials or an error on the system!');
+                return;
             }
-        })
-        .catch((error) => {
+
+            navigate("/");
+        } catch {
             setError('Error bad credentials or an error on the system!');
-        })
+        }
     }
     
     return (

@@ -1,15 +1,7 @@
 package com.example.demo;
-import org.springframework.boot.autoconfigure.security.saml2.Saml2RelyingPartyProperties.AssertingParty.Verification;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
@@ -24,18 +16,20 @@ public class EmailVerificationController {
     
     private final VerificationTokenRepository verificationTokenRepository;
     private final UserRepository userRepository;
+    private final EmailService emailService;
     
     public EmailVerificationController(VerificationTokenRepository verificationTokenRepository,
-                                        UserRepository userRepository) {
+                                        UserRepository userRepository,
+                                        EmailService emailService) {
         this.verificationTokenRepository = verificationTokenRepository;
         this.userRepository = userRepository;
+        this.emailService = emailService;
     }
 
     //Need to create a resend route
+    //Verify user before they can access dashboard, draw, etc
     
-
-    //Need to send a authentication email with the verify route
-    @PostMapping("/verification-tokens")
+    @PostMapping("/generate-token")
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<?> generateVerificationToken(@RequestParam String email){
         Optional<User> user = userRepository.findByEmail(email);
@@ -49,6 +43,8 @@ public class EmailVerificationController {
 
         VerificationToken verificationToken = new VerificationToken(user.get(), token, expiryDate, false);
         verificationTokenRepository.save(verificationToken);
+
+        emailService.sendEmail(email, "Pictogram: Email Verification", "http://localhost:3000/#/verify?token=" + token);
         return ResponseEntity.ok("Verification token generated and saved.");
     }
 
