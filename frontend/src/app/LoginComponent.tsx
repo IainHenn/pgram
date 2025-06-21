@@ -12,29 +12,27 @@ function LoginComponent(){
     }
 
     function loginUser() {
+        setError('');
         fetch('http://localhost:8080/login', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
             credentials: 'include',
-            body: JSON.stringify({name, password})
+            body: JSON.stringify({ name, password })
         })
-        .then((resp) => {
-            if(!resp.ok){
-                return resp.json().then((error) => {
-                    setError('Error bad credentials or an error on the system!');
-                })
+        .then(loginResp => {
+            if (!loginResp.ok) {
+                setError('Error bad credentials or an error on the system!');
+                return;
             }
-            else{
-                navigate("/dashboard");
-            }
+            console.log("login successful");
+            navigate("/dashboard");
         })
         .catch((error) => {
-            setError('Error bad credentials or an error on the system!');
+            setError(error.message || 'Error bad credentials or an error on the system!');
         });
     }
-
 
     return (
         <div className="flex items-center justify-center min-h-screen bg-gray-100">

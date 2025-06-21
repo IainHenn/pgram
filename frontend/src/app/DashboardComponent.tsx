@@ -139,9 +139,27 @@ function DashboardComponent(){
         })
         .then(resp => {
             if(!resp.ok){
+                console.log("user not authenticated");
                 throw new Error("User not authenticated!");
             }
-            return resp.json()
+            let result = (resp.json());
+            return result;
+        })
+        .catch((error) => {
+            navigate('/');
+        })
+    }, [navigate]);
+
+    useEffect(() => {
+        fetch("http://localhost:8080/check-verification", {
+            method: 'GET',
+            credentials: "include"
+        })
+        .then(resp => {
+            if(!resp.ok){
+                console.log("verification fail");
+                throw new Error("Email not verified!");
+            }
         })
         .catch((error) => {
             navigate('/');
@@ -163,7 +181,7 @@ function DashboardComponent(){
             return resp.json()
         })
         .then(data => {
-            console.log(data);
+            console.log("data ", data);
             setUserLoggedIn(data.username);
         })
     }, []);

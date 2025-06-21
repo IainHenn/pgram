@@ -18,10 +18,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByName(String name);
     Optional<User> findByEmail(String email);
 
-    @Query("SELECT u.name as username, u.bio as bio, p.imagePath as imagePath " +
-       "FROM Post p JOIN p.user u " +
-       "WHERE p.imagePath IS NOT NULL AND " +
-       "u = :user AND " +
-       "p.imageTime = (SELECT MAX(p2.imageTime) FROM Post p2 WHERE p2.user = u AND p2.imagePath IS NOT NULL)")
+    @Query("SELECT u.name as username, u.bio as bio, " +
+           "(SELECT p.imagePath FROM Post p WHERE p.user = u AND p.imagePath IS NOT NULL ORDER BY p.imageTime DESC LIMIT 1) as imagePath " +
+           "FROM User u WHERE u = :user")
     Optional<GetUserInfo> GetUserInfo(@Param("user") User user);
 }

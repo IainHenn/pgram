@@ -45,6 +45,22 @@ const DrawComponent: React.FC = () => {
         });
     }, [navigate]);
 
+    useEffect(() => {
+            fetch("http://localhost:8080/check-verification", {
+                method: 'GET',
+                credentials: "include"
+            })
+            .then(resp => {
+                if(!resp.ok){
+                    throw new Error("Email not verified!");
+                }
+                return resp.json()
+            })
+            .catch((error) => {
+                navigate('/');
+            })
+        }, [navigate]);
+
     const post = () => {
         const canvas = canvasRef.current;
         if (canvas) {

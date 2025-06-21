@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -49,6 +50,7 @@ public class UserController {
     private final AuthenticationManager authenticationManager;
     private final UserDetailsService userDetailsService;
     private final PasswordEncoder passwordEncoder;
+    private final VerificationTokenRepository verificationTokenRepository;
     
     @Autowired
     private final S3Client s3client = S3Client.create();
@@ -58,13 +60,15 @@ public class UserController {
                             AuthenticationManager authenticationManager, 
                             UserDetailsService userDetailsService, 
                             JwtUtil jwtUtil, 
-                            PasswordEncoder passwordEncoder) {
+                            PasswordEncoder passwordEncoder,
+                            VerificationTokenRepository verificationTokenRepository) {
         this.userRepository = userRepository;
         this.postRepository = postRepository;
         this.authenticationManager = authenticationManager;
         this.userDetailsService = userDetailsService;
         this.jwtUtil = jwtUtil;
         this.passwordEncoder = passwordEncoder;
+        this.verificationTokenRepository = verificationTokenRepository;
     }
 
     @PostMapping("/users")
@@ -92,6 +96,8 @@ public class UserController {
         Object principal = authentication.getPrincipal();
         String username = userDetails.getUsername();
         User user = userRepository.findByName(username).orElseThrow(() -> new IllegalArgumentException("User not found"));
+        System.out.println("USERUSER" + user.toString());
+        System.out.println(userRepository.GetUserInfo(user));
         return ResponseEntity.ok(userRepository.GetUserInfo(user));
     }
 
@@ -141,10 +147,27 @@ public class UserController {
         return ResponseEntity.noContent().build();
     }
 
+    // Merged login and verification check route
     @PostMapping("/login")
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<?> loginUser(@RequestBody LoginRequest loginRequest, HttpServletResponse response) {
         try {
+            // Check if user exists
+            Optional<User> userOpt = userRepository.findByName(loginRequest.getName());
+            if (!userOpt.isPresent()) {
+                return ResponseEntity.badRequest().body("User not found.");
+            }
+
+            // Check verification status
+            VerificationToken verificationToken = verificationTokenRepository.findByUser(userOpt.get());
+            if (verificationToken == null) {
+                return ResponseEntity.badRequest().body("Verification token not found.");
+            }
+            if (!verificationToken.isVerified()) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("User is not verified.");
+            }
+
+            // Authenticate user
             Authentication auth = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginRequest.getName(), loginRequest.getPassword())
             );
@@ -161,10 +184,10 @@ public class UserController {
             cookie.setMaxAge(24 * 60 * 60);
             response.addCookie(cookie);
             return ResponseEntity.ok(new LoginResponse(user.getName(), token));
-        }
-
-        catch(AuthenticationException ex){
+        } catch (AuthenticationException ex) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred: " + e.getMessage());
         }
     }
 
