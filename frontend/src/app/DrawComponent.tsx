@@ -36,11 +36,13 @@ const DrawComponent: React.FC = () => {
         })
         .then(resp => {
             if (!resp.ok) {
+                console.log(resp);
                 throw new Error("User not authenticated!");
             }
             return resp.json();
         })
         .catch(() => {
+            console.log("authentication failed");
             navigate('/');
         });
     }, [navigate]);
@@ -52,11 +54,11 @@ const DrawComponent: React.FC = () => {
             })
             .then(resp => {
                 if(!resp.ok){
+                    console.log(resp);
                     throw new Error("Email not verified!");
                 }
-                return resp.json()
             })
-            .catch((error) => {
+            .catch(() => {
                 navigate('/');
             })
         }, [navigate]);

@@ -48,7 +48,6 @@ const ProfileComponent: React.FC = () => {
             if(!resp.ok){
                 throw new Error("Email not verified!");
             }
-            return resp.json()
         })
         .catch((error) => {
             navigate('/');

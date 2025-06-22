@@ -54,6 +54,8 @@ public class EmailVerificationController {
             String username = userDetails.getUsername();
             Optional<User> user = userRepository.findByName(username);
 
+            System.out.println(user.toString());
+
             if (!user.isPresent()) {
                 return ResponseEntity.badRequest().body("User not found.");
             }
@@ -65,6 +67,7 @@ public class EmailVerificationController {
             }
 
             if (verificationToken.isVerified()) {
+                System.out.println("verified!");
                 return ResponseEntity.ok("User is verified.");
             } else {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body("User is not verified.");
