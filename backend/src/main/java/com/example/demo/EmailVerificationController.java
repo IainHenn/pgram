@@ -111,9 +111,10 @@ public class EmailVerificationController {
     //Need give this option after the initial send, create new box that asks for resend
     @PostMapping("/resend-token")
     @ResponseStatus(HttpStatus.OK)
-    public ResponseEntity<?> resendVerificationToken(@RequestParam String email) {
-        Optional<User> user = userRepository.findByEmail(email);
-        
+    public ResponseEntity<?> resendVerificationToken(@RequestBody EmailRequest emailRequest) {
+        Optional<User> user = userRepository.findByEmail(emailRequest.getEmail());
+        System.out.println(user.toString());
+        System.out.println("User present? " + user.isPresent());
         if(user.isPresent()){
             VerificationToken verificationToken = verificationTokenRepository.findByUser(user.get());
 
@@ -123,8 +124,9 @@ public class EmailVerificationController {
                 verificationToken.setToken(java.util.UUID.randomUUID().toString());
             }
             
-            emailService.sendEmail(email, "Pictogram: Email Verification", "http://localhost:3000/#/verify?token=" + verificationToken.getToken());
+            emailService.sendEmail(emailRequest.getEmail(), "Pictogram: Email Verification", "http://localhost:3000/#/verify?token=" + verificationToken.getToken());
             
+            System.out.println("Successful token generation, sending to frontend");
             return ResponseEntity.ok("Verification token generated and saved.");
 
         } else {

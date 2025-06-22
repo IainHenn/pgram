@@ -34,7 +34,7 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable()) // Disable CSRF for simplicity (not recommended for production)
             .cors(cors -> {}) // Enable CORS with default configuration
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/me", "/api/logout", "/multipart/drawing", "/api/me/post/status", "/login", "/users", "/users/self", "/dashboard", "/posts", "/posts/*", "/verify", "/generate-token", "/check-verification-login").permitAll()
+                .requestMatchers("/api/me", "/api/logout", "/multipart/drawing", "/api/me/post/status", "/login", "/users", "/users/self", "/dashboard", "/posts", "/posts/*", "/verify", "/generate-token", "/check-verification-login", "/resend-token").permitAll()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(new JwtAuthenticationFilter(jwtUtil, userDetailsService), UsernamePasswordAuthenticationFilter.class);
