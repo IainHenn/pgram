@@ -4,7 +4,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToOne;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Column;
 
@@ -16,7 +16,7 @@ public class VerificationToken {
     @GeneratedValue
     private Long id;
 
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
 
@@ -27,14 +27,17 @@ public class VerificationToken {
 
     private boolean verified;
 
+    private String type;
+
     public VerificationToken() {
     }
 
-    public VerificationToken(User user, String token, LocalDateTime expirationDate, boolean verified) {
+    public VerificationToken(User user, String token, LocalDateTime expirationDate, boolean verified, String type) {
         this.user = user;
         this.token = token;
         this.expirationDate = expirationDate;
         this.verified = verified;
+        this.type = type;
     }
 
     public Long getId() {
@@ -75,5 +78,13 @@ public class VerificationToken {
 
     public void setVerified(boolean verified) {
         this.verified = verified;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) { 
+        this.type = type;
     }
 }

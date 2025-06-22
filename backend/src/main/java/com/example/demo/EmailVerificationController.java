@@ -66,7 +66,7 @@ public class EmailVerificationController {
                 return ResponseEntity.badRequest().body("Verification token not found.");
             }
 
-            if (verificationToken.isVerified()) {
+            if (verificationToken.isVerified() && verificationToken.getType() == "EMAIL_VERIFICATION") {
                 System.out.println("verified!");
                 return ResponseEntity.ok("User is verified.");
             } else {
@@ -82,7 +82,6 @@ public class EmailVerificationController {
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<?> checkVerificationLogin(@RequestBody LoginRequest loginRequest){
         try {
-            System.out.println("hi");
             Optional<User> user = userRepository.findByName(loginRequest.getName());
             System.out.println(user.toString());
             if (!user.isPresent()) {
@@ -95,7 +94,7 @@ public class EmailVerificationController {
                 return ResponseEntity.badRequest().body("Verification token not found.");
             }
 
-            if (verificationToken.isVerified()) {
+            if (verificationToken.isVerified() && verificationToken.getType() == "EMAIL_VERIFICATION") {
                 return ResponseEntity.ok("User is verified.");
             } else {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body("User is not verified.");
@@ -118,17 +117,23 @@ public class EmailVerificationController {
         if(user.isPresent()){
             VerificationToken verificationToken = verificationTokenRepository.findByUser(user.get());
 
-            //If user's token is expired
-            if(java.time.LocalDateTime.now().isAfter(verificationToken.getExpirationDate())){
-                verificationToken.setExpirationDate(java.time.LocalDateTime.now());
-                verificationToken.setToken(java.util.UUID.randomUUID().toString());
+            if(verificationToken.getType() == "EMAIL_VERIFICATION"){
+                //If user's token is expired
+                if(java.time.LocalDateTime.now().isAfter(verificationToken.getExpirationDate())){
+                    verificationToken.setExpirationDate(java.time.LocalDateTime.now());
+                    verificationToken.setToken(java.util.UUID.randomUUID().toString());
+                }
+                
+                emailService.sendEmail(emailRequest.getEmail(), "Pictogram: Email Verification", "http://localhost:3000/#/verify?token=" + verificationToken.getToken());
+                
+                System.out.println("Successful token generation, sending to frontend");
+                return ResponseEntity.ok("Verification token generated and saved.");
             }
-            
-            emailService.sendEmail(emailRequest.getEmail(), "Pictogram: Email Verification", "http://localhost:3000/#/verify?token=" + verificationToken.getToken());
-            
-            System.out.println("Successful token generation, sending to frontend");
-            return ResponseEntity.ok("Verification token generated and saved.");
 
+            else{
+                return ResponseEntity.badRequest().body("Invalid or expired token.");
+            }
+        
         } else {
             return ResponseEntity.badRequest().body("Invalid or expired token.");
         }
@@ -146,7 +151,7 @@ public class EmailVerificationController {
         String token = java.util.UUID.randomUUID().toString();
         LocalDateTime expiryDate = java.time.LocalDateTime.now().plusDays(1);
 
-        VerificationToken verificationToken = new VerificationToken(user.get(), token, expiryDate, false);
+        VerificationToken verificationToken = new VerificationToken(user.get(), token, expiryDate, false, "EMAIL_VERIFICATION");
         verificationTokenRepository.save(verificationToken);
 
         emailService.sendEmail(email, "Pictogram: Email Verification", "http://localhost:3000/#/verify?token=" + token);
@@ -170,7 +175,7 @@ public class EmailVerificationController {
             return ResponseEntity.badRequest().body("Token has already been used.");
         }
 
-        if (Optional.ofNullable(verificationToken).isPresent()) {
+        if (Optional.ofNullable(verificationToken).isPresent() && verificationToken.getType() == "EMAIL_VERIFICATION") {
             verificationToken.setVerified(true);
             verificationTokenRepository.save(verificationToken);
             return ResponseEntity.ok("Email verified successfully.");
