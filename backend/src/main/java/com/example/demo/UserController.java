@@ -159,7 +159,7 @@ public class UserController {
             }
 
             // Check verification status
-            VerificationToken verificationToken = verificationTokenRepository.findByUser(userOpt.get());
+            VerificationToken verificationToken = verificationTokenRepository.findByUserAndType(userOpt.get(), "EMAIL_VERIFICATION");
             if (verificationToken == null) {
                 return ResponseEntity.badRequest().body("Verification token not found.");
             }
