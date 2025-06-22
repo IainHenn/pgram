@@ -157,6 +157,19 @@ public class EmailVerificationController {
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<?> verifyEmail(@RequestParam("token") String givenToken) {
         VerificationToken verificationToken = verificationTokenRepository.findByToken(givenToken);
+
+        if (verificationToken == null) {
+            return ResponseEntity.badRequest().body("Invalid or expired token.");
+        }
+
+        if (java.time.LocalDateTime.now().isAfter(verificationToken.getExpirationDate())) {
+            return ResponseEntity.badRequest().body("Token has expired.");
+        }
+
+        if (verificationToken.isVerified()) {
+            return ResponseEntity.badRequest().body("Token has already been used.");
+        }
+
         if (Optional.ofNullable(verificationToken).isPresent()) {
             verificationToken.setVerified(true);
             verificationTokenRepository.save(verificationToken);
