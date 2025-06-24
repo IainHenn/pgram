@@ -51,7 +51,8 @@ public class UserController {
     private final UserDetailsService userDetailsService;
     private final PasswordEncoder passwordEncoder;
     private final VerificationTokenRepository verificationTokenRepository;
-    
+    private final EmailService emailService;
+
     @Autowired
     private final S3Client s3client = S3Client.create();
 
@@ -61,7 +62,8 @@ public class UserController {
                             UserDetailsService userDetailsService, 
                             JwtUtil jwtUtil, 
                             PasswordEncoder passwordEncoder,
-                            VerificationTokenRepository verificationTokenRepository) {
+                            VerificationTokenRepository verificationTokenRepository,
+                            EmailService emailService) {
         this.userRepository = userRepository;
         this.postRepository = postRepository;
         this.authenticationManager = authenticationManager;
@@ -69,6 +71,7 @@ public class UserController {
         this.jwtUtil = jwtUtil;
         this.passwordEncoder = passwordEncoder;
         this.verificationTokenRepository = verificationTokenRepository;
+        this.emailService = emailService;
     }
 
     @PostMapping("/users")
@@ -302,5 +305,68 @@ public class UserController {
         catch (AuthenticationException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Authentication failed: " + e.getMessage());
         } 
+    }
+
+    @PostMapping("users/generate-password-token")
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<?> generateVerificationToken(@RequestParam String email){
+        Optional<User> user = userRepository.findByEmail(email);
+
+        if (!user.isPresent()) {
+            return ResponseEntity.badRequest().body("User not found.");
+        }
+
+        String token = java.util.UUID.randomUUID().toString();
+        LocalDateTime expiryDate = java.time.LocalDateTime.now().plusDays(1);
+
+        VerificationToken verificationToken = new VerificationToken(user.get(), token, expiryDate, false, "PASSWORD_RESET");
+        verificationTokenRepository.save(verificationToken);
+
+        emailService.sendEmail(email, "Pictogram: Password Reset", "http://localhost:3000/#/verify?token=" + token);
+        return ResponseEntity.ok("Verification token generated and saved.");
+    }
+
+    @PostMapping("/users/verify-token")
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<?> verifyEmail(@RequestParam("token") String givenToken) {
+        VerificationToken verificationToken = verificationTokenRepository.findByToken(givenToken);
+
+        if (verificationToken == null) {
+            return ResponseEntity.badRequest().body("Invalid or expired token.");
+        }
+
+        if (java.time.LocalDateTime.now().isAfter(verificationToken.getExpirationDate())) {
+            return ResponseEntity.badRequest().body("Token has expired.");
+        }
+
+        if (verificationToken.isVerified()) {
+            return ResponseEntity.badRequest().body("Token has already been used.");
+        }
+
+        if (Optional.ofNullable(verificationToken).isPresent() && verificationToken.getType() == "PASSWORD_RESET") {
+            verificationToken.setVerified(true);
+            verificationTokenRepository.save(verificationToken);
+            return ResponseEntity.ok("Token is valid.");
+        } else {
+            return ResponseEntity.badRequest().body("Invalid or expired token.");
+        }
+    }
+
+    @PostMapping("/users/reset-password")
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<?> resetPassword(@RequestParam("token") String givenToken, @RequestBody PasswordResetRequest passwordResetRequest){
+        Optional<User> user = verificationTokenRepository.findUserByToken(givenToken);
+
+        if(user != null && user.isPresent()){
+            if(passwordEncoder.matches(passwordResetRequest.getOldPassword(), user.get().getPassword())){
+                user.get().setPassword(passwordEncoder.encode(passwordResetRequest.getNewPassword()));
+                userRepository.save(user.get());
+                return ResponseEntity.ok("Password reset successful.");
+            } else {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Old password is incorrect.");
+            }
+        } else {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid or expired token.");
+        }
     }
 }
