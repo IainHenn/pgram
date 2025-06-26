@@ -158,6 +158,7 @@ function DashboardComponent(){
         .then(resp => {
             if(!resp.ok){
                 console.log("verification fail");
+                console.log(resp);
                 throw new Error("Email not verified!");
             }
         })

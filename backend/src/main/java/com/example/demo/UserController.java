@@ -161,6 +161,8 @@ public class UserController {
                 return ResponseEntity.badRequest().body("User not found.");
             }
 
+            User user = userOpt.get();
+
             // Check verification status
             VerificationToken verificationToken = verificationTokenRepository.findByUserAndType(userOpt.get(), "EMAIL_VERIFICATION");
             if (verificationToken == null) {
@@ -176,10 +178,9 @@ public class UserController {
             );
 
             UserDetails userDetails = userDetailsService.loadUserByUsername(loginRequest.getName());
-            User user = new User();
             user.setName(userDetails.getUsername());
             user.setPassword(userDetails.getPassword());
-            String token = jwtUtil.generateToken(user);
+            String token = jwtUtil.generateToken(userOpt.get());
             Cookie cookie = new Cookie("jwt", token);
             cookie.setHttpOnly(true);
             cookie.setSecure(true); // Set to true in production (requires HTTPS)
@@ -190,6 +191,7 @@ public class UserController {
         } catch (AuthenticationException ex) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
         } catch (Exception e) {
+            System.out.println("this is failing");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred: " + e.getMessage());
         }
     }
@@ -307,9 +309,10 @@ public class UserController {
         } 
     }
 
-    @PostMapping("users/generate-password-token")
+    @PostMapping("/users/generate-password-token")
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<?> generateVerificationToken(@RequestParam String email){
+        System.out.println("Getting inside route");
         Optional<User> user = userRepository.findByEmail(email);
 
         if (!user.isPresent()) {
@@ -322,7 +325,7 @@ public class UserController {
         VerificationToken verificationToken = new VerificationToken(user.get(), token, expiryDate, false, "PASSWORD_RESET");
         verificationTokenRepository.save(verificationToken);
 
-        emailService.sendEmail(email, "Pictogram: Password Reset", "http://localhost:3000/#/verify?token=" + token);
+        emailService.sendEmail(email, "Pictogram: Password Reset", "http://localhost:3000/#/password-reset?token=" + token);
         return ResponseEntity.ok("Verification token generated and saved.");
     }
 
@@ -343,7 +346,7 @@ public class UserController {
             return ResponseEntity.badRequest().body("Token has already been used.");
         }
 
-        if (Optional.ofNullable(verificationToken).isPresent() && verificationToken.getType() == "PASSWORD_RESET") {
+        if (Optional.ofNullable(verificationToken).isPresent() && "PASSWORD_RESET".equals(verificationToken.getType())) {
             verificationToken.setVerified(true);
             verificationTokenRepository.save(verificationToken);
             return ResponseEntity.ok("Token is valid.");
