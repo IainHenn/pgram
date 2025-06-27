@@ -36,14 +36,32 @@ const DrawComponent: React.FC = () => {
         })
         .then(resp => {
             if (!resp.ok) {
+                console.log(resp);
                 throw new Error("User not authenticated!");
             }
             return resp.json();
         })
         .catch(() => {
+            console.log("authentication failed");
             navigate('/');
         });
     }, [navigate]);
+
+    useEffect(() => {
+            fetch("http://localhost:8080/check-verification", {
+                method: 'GET',
+                credentials: "include"
+            })
+            .then(resp => {
+                if(!resp.ok){
+                    console.log(resp);
+                    throw new Error("Email not verified!");
+                }
+            })
+            .catch(() => {
+                navigate('/');
+            })
+        }, [navigate]);
 
     const post = () => {
         const canvas = canvasRef.current;

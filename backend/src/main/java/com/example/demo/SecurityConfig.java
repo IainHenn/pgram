@@ -34,7 +34,7 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable()) // Disable CSRF for simplicity (not recommended for production)
             .cors(cors -> {}) // Enable CORS with default configuration
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/me", "/api/logout", "/multipart/drawing", "/api/me/post/status", "/login", "/users", "/dashboard").permitAll()
+                .requestMatchers("/api/me", "/api/logout", "/multipart/drawing", "/api/me/post/status", "/login", "/users", "/users/self", "/dashboard", "/posts", "/posts/*", "/verify", "/generate-token", "/check-verification-login", "/resend-token", "/users/generate-password-token", "/users/verify-token", "/users/reset-password").permitAll()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(new JwtAuthenticationFilter(jwtUtil, userDetailsService), UsernamePasswordAuthenticationFilter.class);
@@ -55,7 +55,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(Collections.singletonList("http://localhost:3000"));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowCredentials(true);
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Cache-Control", "Content-Type"));
 

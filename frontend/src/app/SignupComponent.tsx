@@ -9,27 +9,64 @@ function SignupComponent(){
     const [password, setPassword] = useState('');
     const [email, setEmail] = useState('');
     const [error, setError] = useState('');
+    const [resend, setResend] = useState(false);
+    const [resendMessage, setResendMessage] = useState("");
+    const [emailSentMessage, setEmailSentMessage] = useState("");
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
-    function signupUser(){
-        fetch('http://localhost:8080/users', {
+
+    async function signupUser() {
+        try {
+            const resp1 = await fetch('http://localhost:8080/users', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ name, password, email })
+            });
+
+            if (resp1.status !== 201) {
+                await resp1.json();
+                setError('Error bad credentials or an error on the system!');
+                return;
+            }
+
+            const resp2 = await fetch(`http://localhost:8080/generate-token?email=${email}`, {
+                method: 'POST'
+            });
+
+            if (!resp2.ok) {
+                await resp2.json();
+                setError('Error bad credentials or an error on the system!');
+                return;
+            }
+
+            setResend(true);
+            setEmailSentMessage("Verification email sent!");
+            setIsSubmitting(true);
+
+        } catch {
+            setError('Error bad credentials or an error on the system!');
+        }
+    }
+
+    function resendEmail(){
+        fetch("http://localhost:8080/resend-token", {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({name, password, email})
+            body: JSON.stringify({"email": email})
         })
         .then(resp => {
             if(!resp.ok){
-                return resp.json().then((error) => {
-                    setError('Error bad credentials or an error on the system!');
-                })
+                console.log("verification fail");
+                throw new Error("Email not verified!");
             }
-            else{
-                navigate("/");
-            }
+            setResendMessage("Verification email resent!");
         })
-        .catch((error) => {
-            setError('Error bad credentials or an error on the system!');
+        .catch(() => {
+            navigate('/');
         })
     }
     
@@ -60,7 +97,10 @@ function SignupComponent(){
                     onChange={(e) => setEmail(e.target.value)}
                 />
                 <p className='text-red-500 font-bold'>{error}</p>
-                <button className="block w-full p-2 bg-black text-white rounded hover:bg-black-600" onClick={signupUser}>Sign Up</button>
+                <button className="block w-full p-2 bg-black text-white rounded hover:bg-black-600" onClick={signupUser} disabled={isSubmitting}>Sign Up</button>
+                {emailSentMessage !== "" && <p className='text-blue-500 font-bold'>{emailSentMessage}</p>}
+                {resend && <button className="block w-full p-2 bg-blue-400 text-white rounded hover:bg-blue-600" onClick={resendEmail}>Resend</button>}
+                {resendMessage !== "" && <p className='text-blue-500 font-bold'>{resendMessage}</p>}
             </div>
         </div>
     );  
