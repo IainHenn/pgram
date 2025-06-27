@@ -139,7 +139,6 @@ function DashboardComponent(){
         })
         .then(resp => {
             if(!resp.ok){
-                console.log("user not authenticated");
                 throw new Error("User not authenticated!");
             }
             let result = (resp.json());
@@ -157,8 +156,6 @@ function DashboardComponent(){
         })
         .then(resp => {
             if(!resp.ok){
-                console.log("verification fail");
-                console.log(resp);
                 throw new Error("Email not verified!");
             }
         })
@@ -182,7 +179,6 @@ function DashboardComponent(){
             return resp.json()
         })
         .then(data => {
-            console.log("data ", data);
             setUserLoggedIn(data.username);
         })
     }, []);
@@ -205,7 +201,6 @@ function DashboardComponent(){
         })
         .then(data => {
             if(data){
-                console.log(data);
                 if (data && data.content && data.content.length > 0) {
                     setPosts(prev => [...prev, ...data.content]);
                     setPageNum(nextPage);

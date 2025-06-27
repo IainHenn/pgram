@@ -99,8 +99,6 @@ public class UserController {
         Object principal = authentication.getPrincipal();
         String username = userDetails.getUsername();
         User user = userRepository.findByName(username).orElseThrow(() -> new IllegalArgumentException("User not found"));
-        System.out.println("USERUSER" + user.toString());
-        System.out.println(userRepository.GetUserInfo(user));
         return ResponseEntity.ok(userRepository.GetUserInfo(user));
     }
 
@@ -191,7 +189,6 @@ public class UserController {
         } catch (AuthenticationException ex) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
         } catch (Exception e) {
-            System.out.println("this is failing");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred: " + e.getMessage());
         }
     }
@@ -227,9 +224,6 @@ public class UserController {
         String password = userDetails.getPassword();
         String bucketName = "pgram";
         String key = "images/" + username + "_" + System.currentTimeMillis() + "_drawing.png";
-        if(image != null){
-            System.out.println("file exists!");
-        }
 
         try {
             //Upload image to Amazon S3 SDK
@@ -247,7 +241,6 @@ public class UserController {
             Post userPost = new Post(user, userPostPath, LocalDateTime.now());
             postRepository.save(userPost);
         } catch (IOException e) {
-            System.err.println("Error while reading image bytes: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to upload image");
         }
 
@@ -258,7 +251,6 @@ public class UserController {
     @GetMapping("/posts")
     @ResponseStatus(HttpStatus.OK)
     public Page<GetUsernameAndImagePath> getPosts(Pageable pageable){
-        System.out.println("result " + postRepository.getUserPosts(pageable));
         return postRepository.getUserPosts(pageable);
     }
 
@@ -312,7 +304,6 @@ public class UserController {
     @PostMapping("/users/generate-password-token")
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<?> generateVerificationToken(@RequestParam String email){
-        System.out.println("Getting inside route");
         Optional<User> user = userRepository.findByEmail(email);
 
         if (!user.isPresent()) {

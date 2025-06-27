@@ -50,7 +50,6 @@ function LoginComponent(){
                 setError('Error bad credentials or an error on the system!');
                 return;
             }
-            console.log("login successful");
             navigate("/dashboard");
         })
         .catch((error) => {

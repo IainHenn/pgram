@@ -12,7 +12,6 @@ function PasswordResetComponent(){
 
     let params = new URLSearchParams(location.search);
     token = params.get("token");
-    console.log(token.toString());
 
     const [message, setMessage] = useState("");
 

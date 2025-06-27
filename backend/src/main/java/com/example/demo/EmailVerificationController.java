@@ -50,50 +50,36 @@ public class EmailVerificationController {
     @GetMapping("/check-verification")
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<?> checkUserVerification(@AuthenticationPrincipal UserDetails userDetails){
-        System.out.println("Entering /check-verification endpoint");
         try {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            System.out.println("Authentication object: " + authentication);
             Object principal = authentication.getPrincipal();
-            System.out.println("Principal object: " + principal);
 
             if (userDetails == null) {
-                System.out.println("UserDetails is null");
                 return ResponseEntity.badRequest().body("UserDetails is null.");
             }
 
             String username = userDetails.getUsername();
-            System.out.println("Username from UserDetails: " + username);
 
             Optional<User> user = userRepository.findByName(username);
-            System.out.println("User optional: " + user);
 
             if (!user.isPresent()) {
-                System.out.println("User not found in repository");
                 return ResponseEntity.badRequest().body("User not found.");
             }
 
             VerificationToken verificationToken = verificationTokenRepository.findByUserAndType(user.get(), "EMAIL_VERIFICATION");
-            System.out.println("VerificationToken: " + verificationToken);
 
             if (verificationToken == null) {
-                System.out.println("Verification token not found for user");
                 return ResponseEntity.badRequest().body("Verification token not found.");
             }
 
-            System.out.println("VerificationToken.isVerified: " + verificationToken.isVerified());
-            System.out.println("VerificationToken.getType: " + verificationToken.getType());
 
             if (verificationToken.isVerified() && "EMAIL_VERIFICATION".equals(verificationToken.getType())) {
-                System.out.println("User is verified!");
                 return ResponseEntity.ok("User is verified.");
             } else {
-                System.out.println("User is not verified.");
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body("User is not verified.");
             }
 
         } catch (Exception e) {
-            System.out.println("Exception occurred: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred: " + e.getMessage());
         }
@@ -104,7 +90,6 @@ public class EmailVerificationController {
     public ResponseEntity<?> checkVerificationLogin(@RequestBody LoginRequest loginRequest){
         try {
             Optional<User> user = userRepository.findByName(loginRequest.getName());
-            System.out.println(user.toString());
             if (!user.isPresent()) {
                 return ResponseEntity.badRequest().body("User not found.");
             }
@@ -133,8 +118,6 @@ public class EmailVerificationController {
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<?> resendVerificationToken(@RequestBody EmailRequest emailRequest) {
         Optional<User> user = userRepository.findByEmail(emailRequest.getEmail());
-        System.out.println(user.toString());
-        System.out.println("User present? " + user.isPresent());
         if(user.isPresent()){
             VerificationToken verificationToken = verificationTokenRepository.findByUser(user.get());
 
@@ -147,7 +130,6 @@ public class EmailVerificationController {
                 
                 emailService.sendEmail(emailRequest.getEmail(), "Pictogram: Email Verification", "http://localhost:3000/#/verify?token=" + verificationToken.getToken());
                 
-                System.out.println("Successful token generation, sending to frontend");
                 return ResponseEntity.ok("Verification token generated and saved.");
             }
 
