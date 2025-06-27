@@ -1,9 +1,6 @@
 # 🎨 Pictogram
 
-**Pictogram** is an open-source social media platform centered around *drawing and sharing*. Inspired by the nostalgic charm of **Miiverse** on the Wii U, this project revives the joy of casual sketching and community interaction.
-
-Rather than being a cutting-edge canvas tool, Pictogram aims for simplicity—think of a lightweight version of MS Paint—wrapped in a Reddit-style UI, with plans for community support in the future.
-
+**Pictogram** is an open-source social media application that aims to simplify the combination of drawing and posting on an outlet that others can view. This project started as an idea after sudden nostalgia for Wiiverse, a social hub that is stuck on Nintendo's WiiU. With this in mind, my goal isn't necessarily to make a cutting edge canvas, but something as simple or simpler than Microsoft's Paint, while also having a frontend design similar to that of Reddit (with communities planned to be created on).
 ---
 
 ## 🛠️ Tech Stack
