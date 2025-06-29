@@ -40,6 +40,7 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.beans.factory.annotation.Value;
 
 @RestController
 @CrossOrigin(origins = "http://localhost:3000")
@@ -52,6 +53,9 @@ public class UserController {
     private final PasswordEncoder passwordEncoder;
     private final VerificationTokenRepository verificationTokenRepository;
     private final EmailService emailService;
+    
+    @Value("${aws.bucket.name}")
+    private String bucketName;
 
     @Autowired
     private final S3Client s3client = S3Client.create();
@@ -144,6 +148,14 @@ public class UserController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public ResponseEntity<?> deletePost(@AuthenticationPrincipal UserDetails userDetails, @PathVariable Long postId) {
         Post post = postRepository.findById(postId).orElseThrow(() -> new IllegalArgumentException("Post not found"));
+        String postPath = post.getImagePath();
+        String key = postPath.replace("https://" + bucketName + ".s3.amazonaws.com/", "");
+        software.amazon.awssdk.services.s3.model.DeleteObjectRequest deleteObjectRequest =
+            software.amazon.awssdk.services.s3.model.DeleteObjectRequest.builder()
+                .bucket(bucketName)
+                .key(key)
+                .build();
+        s3client.deleteObject(deleteObjectRequest);
         postRepository.delete(post);
         return ResponseEntity.noContent().build();
     }
