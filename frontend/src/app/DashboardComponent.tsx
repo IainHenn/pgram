@@ -281,7 +281,7 @@ function DashboardComponent(){
             >
                 <div className="bg-white min-h-screen grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 p-4">
                     {posts.map((post, index) => (
-                        <div key={index} className="border rounded-lg shadow-md p-4 bg-gray-100 h-[100%] w-[90%]">
+                        <div key={index} className="border rounded-lg shadow-md p-4 bg-gray-100 h-[50%] w-[90%]">
                             <DrawComponent
                                 username={post.username}
                                 imagePath={post.imagePath}
