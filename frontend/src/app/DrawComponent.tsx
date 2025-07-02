@@ -298,21 +298,6 @@ const DrawComponent: React.FC = () => {
                     marginBottom: '0.5rem',
                     width: '100%',
                     padding: '0.5rem',
-                    backgroundColor: '#28A745',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '0.25rem',
-                    cursor: 'pointer',
-                }}
-                >
-                Save and Continue
-                </button>
-                <button
-                style={{
-                    display: 'block',
-                    marginBottom: '0.5rem',
-                    width: '100%',
-                    padding: '0.5rem',
                     backgroundColor: '#FFC107',
                     color: 'black',
                     border: 'none',
