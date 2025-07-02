@@ -59,30 +59,7 @@ const ProfileComponent: React.FC = () => {
     }, [navigate]);
 
     
-    useEffect(() => {
-    fetch("http://localhost:8080/users/self", {
-        method: 'GET',
-        credentials: "include",
-        headers: {
-            'Content-Type': 'application/json'
-        }
-    })
-    .then(resp => {
-        if (!resp.ok){
-            throw new Error("Some error occured");
-        }
-        return resp.json();
-    })
-    .then(data => {
-        setSelfUsername(data.username);
-        setUsername(data.username); // Only if viewing own profile
-    })
-    .catch(() => {
-        setError("Failed to fetch user data");
-    });
-}, []);
-
-        // Fetch logged-in user's username
+    // Fetch logged-in user's username
     useEffect(() => {
         fetch("http://localhost:8080/users/self", {
             method: 'GET',
@@ -136,6 +113,9 @@ const ProfileComponent: React.FC = () => {
             setError("");
         }
     }, [selfUsername, window.location.hash]);
+
+    console.log(selfUsername);
+    console.log(usernameInURL);
 
     const saveChanges = ({ username, bio }: { username: string; bio: string }) => {
         fetch("http://localhost:8080/users/self", {
