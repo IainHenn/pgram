@@ -3,6 +3,7 @@ import { useNavigate, Link} from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { error } from 'console';
 import InfiniteScroll from 'react-infinite-scroll-component';
+import { redirect } from 'next/dist/server/api-utils';
 
 
 interface DrawComponentProps {
@@ -15,15 +16,20 @@ interface DrawComponentProps {
 
 const DrawComponent: React.FC<DrawComponentProps> = ({ username, imagePath, postId, deleteable, onDelete }) => {
     const [showOptions, setShowOptions] = useState<boolean | "deleted">(false);
+    const navigate = useNavigate();
 
     const handleOptionsClick = () => {
         setShowOptions((prev) => !prev);
     };
 
+    const redirectToProfile = (username: string) => {
+        navigate(`/profile/${username}`)
+    }
+
     return (
         <div className="relative">
             <div className="flex items-center justify-between mb-2">
-                <h1 className='text-black font-bold'>{username}</h1>
+                <h1 className='text-black font-bold hover:underline' onClick={() => redirectToProfile(username)}>{username}</h1>
                 {deleteable && (
                     <div className="relative">
                         <button
@@ -95,6 +101,7 @@ function DashboardComponent(){
     const [posts, setPosts] = useState<Post[]>([]);
     const navigate = useNavigate();
     const [userLoggedIn, setUserLoggedIn] = useState("");
+    const [focusedPost, setFocusedPost] = useState(null);
 
 
     const handleDeletePost = (postId: number) => {
@@ -281,7 +288,12 @@ function DashboardComponent(){
             >
                 <div className="bg-white min-h-screen grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 p-4">
                     {posts.map((post, index) => (
-                        <div key={index} className="border rounded-lg shadow-md p-4 bg-gray-100 h-[50%] w-[90%]">
+                        <div
+                            key={index}
+                            className="border rounded-lg shadow-md p-4 bg-gray-100 hover:bg-gray-500 h-[50%] w-[90%]"
+                            onClick={() => setFocusedPost(post)}
+                            style={{ cursor: 'pointer' }}
+                        >
                             <DrawComponent
                                 username={post.username}
                                 imagePath={post.imagePath}
@@ -292,6 +304,26 @@ function DashboardComponent(){
                         </div>
                     ))}
                 </div>
+
+                {focusedPost && (
+                    <div className="fixed inset-0 flex items-center justify-center bg-white bg-opacity-60 z-50 h-full w-full"
+                    onClick={e => {
+                        if (e.target === e.currentTarget) {
+                            setFocusedPost(null);
+                        }
+                    }}>
+                        <div className="bg-grey-100 rounded-lg p-8 shadow-lg max-w-xl max-h-xl w-full relative">
+                            <DrawComponent
+                                username={focusedPost.username}
+                                imagePath={focusedPost.imagePath}
+                                postId={Number(focusedPost.id)}
+                                deleteable={userLoggedIn === focusedPost.username}
+                                onDelete={handleDeletePost}
+                            />
+                        </div>
+                    </div>
+                )}
+
             </InfiniteScroll>
         </>
     );  
