@@ -113,7 +113,7 @@ function DashboardComponent(){
     }
 
     const sendToProfile = () => {
-        navigate('/profile');
+        navigate(`/profile/${userLoggedIn}`);
     }
 
     function signOut(){
@@ -148,8 +148,7 @@ function DashboardComponent(){
             if(!resp.ok){
                 throw new Error("User not authenticated!");
             }
-            let result = (resp.json());
-            return result;
+            return resp.json();
         })
         .catch((error) => {
             navigate('/');
