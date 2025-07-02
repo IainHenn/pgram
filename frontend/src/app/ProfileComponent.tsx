@@ -1,6 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {DrawComponent} from './DashboardComponent';
+import { url } from 'inspector';
 
 const ProfileComponent: React.FC = () => {
     const navigate = useNavigate();
@@ -9,6 +10,9 @@ const ProfileComponent: React.FC = () => {
     const [imagePath, setImagePath] = useState("");
     const [error, setError] = useState("");
     const [saveSuccess, setSaveSuccess] = useState(false);
+    const [self, isSelf] = useState(false);
+    const [selfUsername, setSelfUsername] = useState('');
+    const [usernameInURL, setUsernameInURL] = useState('');
 
     const handleBioChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
         console.log(event.target.value);
@@ -56,6 +60,30 @@ const ProfileComponent: React.FC = () => {
 
     
     useEffect(() => {
+    fetch("http://localhost:8080/users/self", {
+        method: 'GET',
+        credentials: "include",
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(resp => {
+        if (!resp.ok){
+            throw new Error("Some error occured");
+        }
+        return resp.json();
+    })
+    .then(data => {
+        setSelfUsername(data.username);
+        setUsername(data.username); // Only if viewing own profile
+    })
+    .catch(() => {
+        setError("Failed to fetch user data");
+    });
+}, []);
+
+        // Fetch logged-in user's username
+    useEffect(() => {
         fetch("http://localhost:8080/users/self", {
             method: 'GET',
             credentials: "include",
@@ -66,21 +94,50 @@ const ProfileComponent: React.FC = () => {
         .then(resp => {
             if (!resp.ok){
                 throw new Error("Some error occured");
-
             }
             return resp.json();
         })
         .then(data => {
-            console.log("Fetched data:", data);
+            setSelfUsername(data.username);
             setUsername(data.username);
-            setBio(data.bio);
-            setImagePath(data.imagePath);
         })
-    }, [])
+        .catch(() => {
+            setError("Failed to fetch user data");
+        });
+    }, []);
+
+    useEffect(() => {
+        const hashPath = window.location.hash;
+        const pathParts = hashPath.replace(/^#\/?/, '').split('/'); 
+        const urlUsername = pathParts[pathParts.length - 1] || '';
+        setUsernameInURL(urlUsername);
+
+        if (urlUsername && urlUsername !== 'profile' && urlUsername !== selfUsername) {
+            // Viewing someone else's profile
+            fetch(`http://localhost:8080/users/${urlUsername}`)
+            .then(resp => {
+                if (!resp.ok) {
+                    throw new Error("User not found");
+                }
+                return resp.json();
+            })
+            .then(data => {
+                setUsername(data.username);
+                setBio(data.bio);
+                setImagePath(data.imagePath);
+                isSelf(false);
+            })
+            .catch(() => {
+                setError("User not found");
+            });
+        } else if (urlUsername === selfUsername || urlUsername === 'profile' || !urlUsername) {
+            // Viewing own profile
+            isSelf(true);
+            setError("");
+        }
+    }, [selfUsername, window.location.hash]);
 
     const saveChanges = ({ username, bio }: { username: string; bio: string }) => {
-        console.log(username);
-        console.log(bio);
         fetch("http://localhost:8080/users/self", {
             method: 'PATCH',
             credentials: "include",
@@ -135,6 +192,7 @@ const ProfileComponent: React.FC = () => {
                                 id="username"
                                 onChange={handleUsernameChange}
                                 value={username || ""}
+                                disabled={!self}
                                 />
                             </label>
 
@@ -154,25 +212,28 @@ const ProfileComponent: React.FC = () => {
                                     value={bio || ""}
                                     id="bio"
                                     className="outline outline-2 outline-gray-800 rounded-md m-2 mt-4 p-2"
+                                    disabled={!self}
                                 />
                             </label>
 
-                            <button 
-                            style={{
-                                display: 'block',
-                                marginBottom: '0.5rem',
-                                width: '100%',
-                                padding: '0.5rem',
-                                backgroundColor: '#17A2B8',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '0.25rem',
-                                cursor: 'pointer',
-                            }}
-                            onClick={() => saveChanges({ username, bio })}
-                            >
-                            Save Changes
-                            </button>
+                            {self && (
+                                <button 
+                                style={{
+                                    display: 'block',
+                                    marginBottom: '0.5rem',
+                                    width: '100%',
+                                    padding: '0.5rem',
+                                    backgroundColor: '#17A2B8',
+                                    color: 'white',
+                                    border: 'none',
+                                    borderRadius: '0.25rem',
+                                    cursor: 'pointer',
+                                }}
+                                onClick={() => saveChanges({ username, bio })}
+                                >
+                                Save Changes
+                                </button>
+                            )}
                             <p className='text-red-500 font-bold'>{error}</p>
                             {saveSuccess && <p className='text-blue-500 font-bold'>User information saved!</p>}
 

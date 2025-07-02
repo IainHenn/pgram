@@ -106,6 +106,17 @@ public class UserController {
         return ResponseEntity.ok(userRepository.GetUserInfo(user));
     }
 
+    @GetMapping("/users/{username}")
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<?> fetchProfile(@PathVariable String username){
+        Optional<User> user = userRepository.findByName(username);
+        if(user.isPresent()){
+            return ResponseEntity.ok(userRepository.GetUserInfo(user.get()));
+        } else { 
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+        }
+    }
+
     @PatchMapping("/users/self")
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<?> updateProfile(@AuthenticationPrincipal UserDetails userDetails, 

@@ -16,7 +16,7 @@ export default function Home() {
       <Route path="/signup" element={<SignupComponent/>}/>
       <Route path="/dashboard" element={<DashboardComponent/>}/>
       <Route path="/draw" element={<DrawComponent/>}/>
-      <Route path="/profile" element={<ProfileComponent/>}/>
+      <Route path="/profile/:username" element={<ProfileComponent/>}/>
       <Route path="/verify" element={<VerifyEmailComponent/>}/>
       <Route path="/password-reset" element={<PasswordResetComponent/>}/>
     </Routes>
