@@ -90,6 +90,7 @@ public class UserController {
             }
             user.setPassword(passwordEncoder.encode(user.getPassword()));
             user.setImagePath("https://" + bucketName + ".s3.amazonaws.com/profile_pictures/" + "default_photo_pgram.png");
+            user.setImageTime(LocalDateTime.now());
             return userRepository.save(user);
         }
         catch (DataIntegrityViolationException e){
