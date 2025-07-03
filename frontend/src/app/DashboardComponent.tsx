@@ -11,10 +11,11 @@ interface DrawComponentProps {
     imagePath: string;
     postId: number;
     deleteable: boolean;
+    profilePicturePath: string;
     onDelete?: (postId: number) => void;
 }
 
-const DrawComponent: React.FC<DrawComponentProps> = ({ username, imagePath, postId, deleteable, onDelete }) => {
+const DrawComponent: React.FC<DrawComponentProps> = ({ username, imagePath, postId, profilePicturePath, deleteable, onDelete }) => {
     const [showOptions, setShowOptions] = useState<boolean | "deleted">(false);
     const navigate = useNavigate();
 
@@ -25,11 +26,27 @@ const DrawComponent: React.FC<DrawComponentProps> = ({ username, imagePath, post
     const redirectToProfile = (username: string) => {
         navigate(`/profile/${username}`)
     }
+        
+    console.log('DrawComponent props:', { username, imagePath, postId, profilePicturePath, deleteable });
+
 
     return (
         <div className="relative">
             <div className="flex items-center justify-between mb-2">
-                <h1 className='text-black font-bold hover:underline' onClick={() => redirectToProfile(username)}>{username}</h1>
+                <div className="flex items-center space-x-3">
+                    <img
+                        src={profilePicturePath}
+                        alt="No PFP"
+                        style={{ width: 100, height: 100, borderRadius: '50%', objectFit: 'cover', cursor: 'pointer' }}
+                        onClick={() => redirectToProfile(username)}
+                    />
+                    <h1
+                        className="text-black font-bold hover:underline text-4xl"
+                        onClick={() => redirectToProfile(username)}
+                    >
+                        {username}
+                    </h1>
+                </div>
                 {deleteable && (
                     <div className="relative">
                         <button
@@ -95,6 +112,7 @@ function DashboardComponent(){
         username: string; 
         imagePath: string;
         id: string;
+        profilePicturePath: string;
     }
     const [pageNum, setPageNum] = useState(-1);
     const [dataAvailable, setDataAvailable] = useState(true);
@@ -297,6 +315,7 @@ function DashboardComponent(){
                                 username={post.username}
                                 imagePath={post.imagePath}
                                 postId={Number(post.id)}
+                                profilePicturePath={post.profilePicturePath}
                                 deleteable={userLoggedIn === post.username}
                                 onDelete={handleDeletePost}
                             />

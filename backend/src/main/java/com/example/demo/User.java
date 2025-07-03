@@ -16,11 +16,10 @@ public class User{
     private String email;
     private String password;
     @Column(name = "pp_path")
-    private String imagePath;
+    private String profilePicturePath;
     @Column(name = "pp_time")
-    private LocalDateTime imageTime;
+    private LocalDateTime profilePictureTime;
     private String bio;
-
 
     public String getName(){
         return this.name;
@@ -38,12 +37,12 @@ public class User{
         return this.id;
     }
 
-    public String getImagePath(){
-        return this.imagePath;
+    public String getProfilePicturePath(){
+        return this.profilePicturePath;
     }
 
-    public LocalDateTime getImageTime() {
-        return this.imageTime;
+    public LocalDateTime getProfilePictureTime() {
+        return this.profilePictureTime;
     }
 
     public String getBio() {
@@ -66,12 +65,12 @@ public class User{
         this.id = newId;
     }
 
-    public void setImagePath(String newImagePath) {
-        this.imagePath = newImagePath;
+    public void setProfilePicturePath(String newProfilePicturePath) {
+        this.profilePicturePath = newProfilePicturePath;
     }
 
-    public void setImageTime(LocalDateTime newImageTime) {
-        this.imageTime = newImageTime;
+    public void setProfilePictureTime(LocalDateTime newProfilePictureTime) {
+        this.profilePictureTime = newProfilePictureTime;
     }
 
     public void setBio(String newBio) {

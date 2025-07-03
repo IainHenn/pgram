@@ -89,8 +89,8 @@ public class UserController {
                 throw new IllegalArgumentException("Email violation occurred");
             }
             user.setPassword(passwordEncoder.encode(user.getPassword()));
-            user.setImagePath("https://" + bucketName + ".s3.amazonaws.com/profile_pictures/" + "default_photo_pgram.png");
-            user.setImageTime(LocalDateTime.now());
+            user.setProfilePicturePath("https://" + bucketName + ".s3.amazonaws.com/profile_pictures/" + "default_photo_pgram.png");
+            user.setProfilePictureTime(LocalDateTime.now());
             return userRepository.save(user);
         }
         catch (DataIntegrityViolationException e){
