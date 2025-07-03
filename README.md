@@ -22,6 +22,9 @@
 
 ### 🗂️ Posts Dashboard
 - View the **most recent post** from every user
+- View other users’ profiles
+- Post zoom-in modal
+- Click a post to navigate to its author
 - Infinite scrolling support
 
 ### 👤 Profile Page
@@ -38,15 +41,10 @@
 
 ## 🚀 Planned Features
 - Profile pictures
-- View other users’ profiles
-- Post zoom-in modal
-- Click a post to navigate to its author
-- Community creation and interaction
-- Likes / reactions
 - Redis caching
 - Rate limiting
-- Password reset *while signed in*
-
+- Community creation and interaction
+- Likes / reactions
 ---
 
 ## 🧑‍💻 Local Development Setup
