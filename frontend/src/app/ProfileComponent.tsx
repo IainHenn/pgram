@@ -22,6 +22,10 @@ const ProfileComponent: React.FC = () => {
     const handleUsernameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setUsername(event.target.value);
     }
+    
+    const leaveDraw = () => {
+        navigate("/dashboard");
+    }
 
     // Check if user is signed in
     useEffect(() => {
@@ -229,6 +233,37 @@ const ProfileComponent: React.FC = () => {
                         </div>
                     </div>
                 </div>
+            </div>
+            
+            <div
+                style={{
+                position: 'absolute',
+                top: '20px',
+                right: '20px',
+                width: '12rem',
+                padding: '1rem',
+                backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                borderRadius: '0.5rem',
+                boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
+                zIndex: 1000,
+                color: 'white',
+                }}
+            >
+                <button
+                style={{
+                    display: 'block',
+                    width: '100%',
+                    padding: '0.5rem',
+                    backgroundColor: '#343A40',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '0.25rem',
+                    cursor: 'pointer',
+                }}
+                onClick={leaveDraw}
+                >
+                To Dashboard
+                </button>
             </div>
         </div>
     )
