@@ -89,6 +89,7 @@ public class UserController {
                 throw new IllegalArgumentException("Email violation occurred");
             }
             user.setPassword(passwordEncoder.encode(user.getPassword()));
+            user.setImagePath("https://" + bucketName + ".s3.amazonaws.com/profile_pictures/" + "default_photo_pgram.png");
             return userRepository.save(user);
         }
         catch (DataIntegrityViolationException e){
@@ -171,7 +172,6 @@ public class UserController {
         return ResponseEntity.noContent().build();
     }
 
-    // Merged login and verification check route
     @PostMapping("/login")
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<?> loginUser(@RequestBody LoginRequest loginRequest, HttpServletResponse response) {

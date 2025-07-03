@@ -15,9 +15,9 @@ public class User{
     private String name;
     private String email;
     private String password;
-    @Column(name = "image_path")
+    @Column(name = "pp_path")
     private String imagePath;
-    @Column(name = "image_time")
+    @Column(name = "pp_time")
     private LocalDateTime imageTime;
     private String bio;
 
