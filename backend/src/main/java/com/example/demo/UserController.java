@@ -174,7 +174,15 @@ public class UserController {
         } catch (IOException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to upload profile picture");
         }
-        return ResponseEntity.ok("Profile picture uploaded successfully");
+
+        // Returning the new path
+        if (user.isPresent()) {
+            Map<String, String> response = new HashMap<>();
+            response.put("profilePicturePath", user.get().getProfilePicturePath());
+            return ResponseEntity.ok(response);
+        } else {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to upload profile picture");
+        }
     }
 
     @PatchMapping("/users/self")
@@ -324,8 +332,6 @@ public class UserController {
         } catch (IOException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to upload image");
         }
-
-
         return new ResponseEntity<Map<String, String>>(response, HttpStatus.OK);
     }
 
