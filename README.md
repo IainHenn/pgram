@@ -30,6 +30,7 @@
 ### 👤 Profile Page
 - Edit and save your profile
 - Post deletion for owned content
+- Profile pictures
 
 ### 🔐 Authentication & Security
 - Sign up, Login, Logout
@@ -40,7 +41,6 @@
 ---
 
 ## 🚀 Planned Features
-- Profile pictures
 - Redis caching
 - Rate limiting
 - Community creation and interaction
