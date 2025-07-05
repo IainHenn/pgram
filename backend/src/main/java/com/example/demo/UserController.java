@@ -120,6 +120,63 @@ public class UserController {
         }
     }
 
+    @PostMapping("/users/self/profile-picture")
+    public ResponseEntity<?> uploadProfilePicture(@AuthenticationPrincipal UserDetails userDetails, @RequestParam("profilePicture") MultipartFile file) {
+        if (file.isEmpty()) {
+            return ResponseEntity.badRequest().body("No file uploaded");
+        }
+        String username = userDetails.getUsername();
+        Optional<User> user = userRepository.findByName(username);
+        try {
+            // Validate file type
+            String contentType = file.getContentType();
+            if (contentType == null || 
+                !(contentType.equalsIgnoreCase("image/png") || 
+                  contentType.equalsIgnoreCase("image/jpeg") || 
+                  contentType.equalsIgnoreCase("image/jpg"))) {
+                return ResponseEntity.badRequest().body("Invalid file type. Only PNG, JPG, and JPEG are allowed.");
+            }
+
+            String extension = contentType.equalsIgnoreCase("image/png") ? ".png" : ".jpg";
+            String key = "profile_pictures/" + username + "_" + System.currentTimeMillis() + extension;
+
+            PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+                .bucket(bucketName)
+                .key(key)
+                .contentType(contentType)
+                .build();
+
+            s3client.putObject(putObjectRequest, software.amazon.awssdk.core.sync.RequestBody.fromBytes(file.getBytes()));
+
+            // Update user's profile picture path and time
+            if (user.isPresent()) {
+                User u = user.get();
+                
+                String defaultProfilePic = "https://" + bucketName + ".s3.amazonaws.com/profile_pictures/" + "default_photo_pgram.png";
+
+                if(u.getProfilePicturePath() != null && u.getProfilePicturePath().isEmpty() && !u.getProfilePicturePath().equals(defaultProfilePic)){
+                    String profilePicturePath = u.getProfilePicturePath();
+                    String deleteKey = profilePicturePath.replace("https://" + bucketName + ".s3.amazonaws.com/", "");
+                    software.amazon.awssdk.services.s3.model.DeleteObjectRequest deleteObjectRequest =
+                        software.amazon.awssdk.services.s3.model.DeleteObjectRequest.builder()
+                            .bucket(bucketName)
+                            .key(deleteKey)
+                            .build();
+                    s3client.deleteObject(deleteObjectRequest);
+                }
+                u.setProfilePicturePath("https://" + bucketName + ".s3.amazonaws.com/" + key);
+                u.setProfilePictureTime(LocalDateTime.now());
+                userRepository.save(u);
+            }
+            else{
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to upload profile picture");
+            }
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to upload profile picture");
+        }
+        return ResponseEntity.ok("Profile picture uploaded successfully");
+    }
+
     @PatchMapping("/users/self")
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<?> updateProfile(@AuthenticationPrincipal UserDetails userDetails, 
@@ -247,7 +304,6 @@ public class UserController {
         Object principal = authentication.getPrincipal();
         String username = userDetails.getUsername();
         String password = userDetails.getPassword();
-        String bucketName = "pgram";
         String key = "images/" + username + "_" + System.currentTimeMillis() + "_drawing.png";
 
         try {

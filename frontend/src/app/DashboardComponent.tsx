@@ -13,9 +13,10 @@ interface DrawComponentProps {
     deleteable: boolean;
     profilePicturePath: string;
     onDelete?: (postId: number) => void;
+    onPFP: boolean;
 }
 
-const DrawComponent: React.FC<DrawComponentProps> = ({ username, imagePath, postId, profilePicturePath, deleteable, onDelete }) => {
+const DrawComponent: React.FC<DrawComponentProps> = ({ username, imagePath, postId, profilePicturePath, deleteable, onDelete, onPFP}) => {
     const [showOptions, setShowOptions] = useState<boolean | "deleted">(false);
     const navigate = useNavigate();
 
@@ -27,19 +28,17 @@ const DrawComponent: React.FC<DrawComponentProps> = ({ username, imagePath, post
         navigate(`/profile/${username}`)
     }
         
-    console.log('DrawComponent props:', { username, imagePath, postId, profilePicturePath, deleteable });
 
 
     return (
         <div className="relative">
             <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center space-x-3">
-                    <img
+                    {!onPFP && <img
                         src={profilePicturePath}
-                        alt="No PFP"
                         style={{ width: 100, height: 100, borderRadius: '50%', objectFit: 'cover', cursor: 'pointer' }}
                         onClick={() => redirectToProfile(username)}
-                    />
+                    />}
                     <h1
                         className="text-black font-bold hover:underline text-4xl"
                         onClick={() => redirectToProfile(username)}
@@ -318,6 +317,7 @@ function DashboardComponent(){
                                 profilePicturePath={post.profilePicturePath}
                                 deleteable={userLoggedIn === post.username}
                                 onDelete={handleDeletePost}
+                                onPFP={false}
                             />
                         </div>
                     ))}
@@ -334,9 +334,11 @@ function DashboardComponent(){
                             <DrawComponent
                                 username={focusedPost.username}
                                 imagePath={focusedPost.imagePath}
+                                profilePicturePath={focusedPost.profilePicturePath}
                                 postId={Number(focusedPost.id)}
                                 deleteable={userLoggedIn === focusedPost.username}
                                 onDelete={handleDeletePost}
+                                onPFP={false}
                             />
                         </div>
                     </div>

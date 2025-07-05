@@ -1,7 +1,7 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {DrawComponent} from './DashboardComponent';
-import { url } from 'inspector';
+import { DrawComponent } from './DashboardComponent';
+import { useDropzone } from 'react-dropzone';
 
 const ProfileComponent: React.FC = () => {
     const navigate = useNavigate();
@@ -14,16 +14,18 @@ const ProfileComponent: React.FC = () => {
     const [selfUsername, setSelfUsername] = useState('');
     const [usernameInURL, setUsernameInURL] = useState('');
     const [profilePicturePath, setProfilePicturePath] = useState('');
+    const [newProfilePicture, setNewProfilePicture] = useState<File | null>(null);
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+    const [loading, setLoading] = useState(true);
 
     const handleBioChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
-        console.log(event.target.value);
         setBio(event.target.value);
     };
 
     const handleUsernameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setUsername(event.target.value);
     }
-    
+
     const leaveDraw = () => {
         navigate("/dashboard");
     }
@@ -58,12 +60,11 @@ const ProfileComponent: React.FC = () => {
                 throw new Error("Email not verified!");
             }
         })
-        .catch((error) => {
+        .catch(() => {
             navigate('/');
         })
     }, [navigate]);
 
-    
     // Fetch logged-in user's username
     useEffect(() => {
         fetch("http://localhost:8080/users/self", {
@@ -82,6 +83,7 @@ const ProfileComponent: React.FC = () => {
         .then(data => {
             setSelfUsername(data.username);
             setUsername(data.username);
+            setLoading(false);
         })
         .catch(() => {
             setError("Failed to fetch user data");
@@ -89,6 +91,8 @@ const ProfileComponent: React.FC = () => {
     }, []);
 
     useEffect(() => {
+        if (loading) return;
+
         const hashPath = window.location.hash;
         const pathParts = hashPath.replace(/^#\/?/, '').split('/'); 
         const urlUsername = pathParts[pathParts.length - 1] || '';
@@ -116,14 +120,83 @@ const ProfileComponent: React.FC = () => {
         } else if (urlUsername === selfUsername || urlUsername === 'profile' || !urlUsername) {
             // Viewing own profile
             isSelf(true);
+            fetch(`http://localhost:8080/users/${urlUsername}`)
+            .then(resp => {
+                if (!resp.ok) {
+                    throw new Error("User not found");
+                }
+                return resp.json();
+            })
+            .then(data => {
+                setUsername(data.username);
+                setBio(data.bio);
+                setImagePath(data.imagePath);
+                setProfilePicturePath(data.profilePicturePath);
+            })
+            .catch(() => {
+                setError("User not found");
+            });
+            
             setError("");
         }
-    }, [selfUsername, window.location.hash]);
+    }, [selfUsername, loading, window.location.hash]);
 
-    console.log(selfUsername);
-    console.log(usernameInURL);
+    // Dropzone for profile picture
+    const onDrop = useCallback((acceptedFiles: File[]) => {
+        if (acceptedFiles && acceptedFiles.length > 0) {
+            setNewProfilePicture(acceptedFiles[0]);
+            setPreviewUrl(URL.createObjectURL(acceptedFiles[0]));
+        }
+    }, []);
+    const { getRootProps, getInputProps, isDragActive } = useDropzone({
+        onDrop,
+        accept: { 'image/*': [] },
+        multiple: false,
+        disabled: !self,
+    });
+
+    // Clean up preview URL
+    useEffect(() => {
+        return () => {
+            if (previewUrl) {
+                URL.revokeObjectURL(previewUrl);
+            }
+        };
+    }, [previewUrl]);
 
     const saveChanges = ({ username, bio }: { username: string; bio: string }) => {
+        // If new profile picture, upload it first
+        if (newProfilePicture) {
+            const formData = new FormData();
+            formData.append('profilePicture', newProfilePicture);
+            fetch("http://localhost:8080/users/self/profile-picture", {
+                method: 'POST',
+                credentials: "include",
+                body: formData
+            })
+            .then(resp => {
+                if (!resp.ok) {
+                    throw new Error("Failed to upload profile picture! Make sure it's a PNG, JPEG, or JPG");
+                }
+                return resp.json();
+            })
+            .then(data => {
+                setProfilePicturePath(data.profilePicturePath);
+                setNewProfilePicture(null);
+                setPreviewUrl(null);
+                // Now save username and bio
+                saveUserInfo(username, bio);
+            })
+            .catch(() => {
+                setError("Failed to upload profile picture");
+                setSaveSuccess(false);
+            });
+        } else {
+            saveUserInfo(username, bio);
+        }
+    };
+
+    const saveUserInfo = (username: string, bio: string) => {
         fetch("http://localhost:8080/users/self", {
             method: 'PATCH',
             credentials: "include",
@@ -141,7 +214,6 @@ const ProfileComponent: React.FC = () => {
                 setSaveSuccess(false);
             }
             else if(!resp.ok){
-                console.log("Failed to fetch posts");
                 setSaveSuccess(false);
             }
             else{
@@ -171,16 +243,57 @@ const ProfileComponent: React.FC = () => {
                             alignItems: 'center',
                             padding: '1rem',
                         }}>
-                            <img
-                                src={profilePicturePath}
-                                alt="No PFP"
-                                className='mb-6'
-                                style={{ width: 400, height: 400, borderRadius: '50%', objectFit: 'cover', cursor: 'pointer' }}
-                            />
+                            <div
+                                {...getRootProps()}
+                                style={{
+                                    position: 'relative',
+                                    width: 400,
+                                    height: 400,
+                                    borderRadius: '50%',
+                                    overflow: 'hidden',
+                                    cursor: self ? 'pointer' : 'default',
+                                    border: isDragActive ? '3px dashed #17A2B8' : 'none',
+                                    marginBottom: '1.5rem',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    background: '#f8f9fa'
+                                }}
+                                title={self ? "Click or drag to upload new profile picture" : undefined}
+                            >
+                                <input {...getInputProps()} />
+                                <img
+                                    src={previewUrl || profilePicturePath}
+                                    alt="No PFP"
+                                    style={{
+                                        width: '100%',
+                                        height: '100%',
+                                        borderRadius: '50%',
+                                        objectFit: 'cover',
+                                        opacity: isDragActive ? 0.5 : 1,
+                                        pointerEvents: 'none'
+                                    }}  
+                                />
+                                {self && (
+                                    <div style={{
+                                        position: 'absolute',
+                                        bottom: 0,
+                                        width: '100%',
+                                        background: 'rgba(23,162,184,0.7)',
+                                        color: 'white',
+                                        textAlign: 'center',
+                                        padding: '1rem',
+                                        fontWeight: 600,
+                                        fontSize: '1rem'
+                                    }}>
+                                        {isDragActive ? "Drop image here..." : "Change Profile Picture"}
+                                    </div>
+                                )}
+                            </div>
 
                             <label className="block text-black text-center">
                                 <span>username: </span>
-                                <input contentEditable className="outline outline-2 outline-gray-800 rounded-md m-2 mt-4 p-1" 
+                                <input className="outline outline-2 outline-gray-800 rounded-md m-2 mt-4 p-1" 
                                 style={{display: 'block', overflowX:'hidden', width: '200px'}}
                                 id="username"
                                 onChange={handleUsernameChange}
@@ -237,6 +350,7 @@ const ProfileComponent: React.FC = () => {
                                 <DrawComponent
                                     username={""}
                                     imagePath={imagePath}
+                                    onPFP={true}
                                 />
                             </div>
                         </div>
