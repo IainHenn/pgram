@@ -40,6 +40,7 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.beans.factory.annotation.Value;
 
 @RestController
 @CrossOrigin(origins = "http://localhost:3000")
@@ -52,6 +53,9 @@ public class UserController {
     private final PasswordEncoder passwordEncoder;
     private final VerificationTokenRepository verificationTokenRepository;
     private final EmailService emailService;
+    
+    @Value("${aws.bucket.name}")
+    private String bucketName;
 
     @Autowired
     private final S3Client s3client = S3Client.create();
@@ -85,6 +89,8 @@ public class UserController {
                 throw new IllegalArgumentException("Email violation occurred");
             }
             user.setPassword(passwordEncoder.encode(user.getPassword()));
+            user.setProfilePicturePath("https://" + bucketName + ".s3.amazonaws.com/profile_pictures/" + "default_photo_pgram.png");
+            user.setProfilePictureTime(LocalDateTime.now());
             return userRepository.save(user);
         }
         catch (DataIntegrityViolationException e){
@@ -100,6 +106,83 @@ public class UserController {
         String username = userDetails.getUsername();
         User user = userRepository.findByName(username).orElseThrow(() -> new IllegalArgumentException("User not found"));
         return ResponseEntity.ok(userRepository.GetUserInfo(user));
+    }
+
+    @GetMapping("/users/{username}")
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<?> fetchProfile(@PathVariable String username){
+        Optional<User> user = userRepository.findByName(username);
+        if(user.isPresent()){
+            System.out.println(user.toString());
+            return ResponseEntity.ok(userRepository.GetUserInfo(user.get()));
+        } else { 
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+        }
+    }
+
+    @PostMapping("/users/self/profile-picture")
+    public ResponseEntity<?> uploadProfilePicture(@AuthenticationPrincipal UserDetails userDetails, @RequestParam("profilePicture") MultipartFile file) {
+        if (file.isEmpty()) {
+            return ResponseEntity.badRequest().body("No file uploaded");
+        }
+        String username = userDetails.getUsername();
+        Optional<User> user = userRepository.findByName(username);
+        try {
+            // Validate file type
+            String contentType = file.getContentType();
+            if (contentType == null || 
+                !(contentType.equalsIgnoreCase("image/png") || 
+                  contentType.equalsIgnoreCase("image/jpeg") || 
+                  contentType.equalsIgnoreCase("image/jpg"))) {
+                return ResponseEntity.badRequest().body("Invalid file type. Only PNG, JPG, and JPEG are allowed.");
+            }
+
+            String extension = contentType.equalsIgnoreCase("image/png") ? ".png" : ".jpg";
+            String key = "profile_pictures/" + username + "_" + System.currentTimeMillis() + extension;
+
+            PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+                .bucket(bucketName)
+                .key(key)
+                .contentType(contentType)
+                .build();
+
+            s3client.putObject(putObjectRequest, software.amazon.awssdk.core.sync.RequestBody.fromBytes(file.getBytes()));
+
+            // Update user's profile picture path and time
+            if (user.isPresent()) {
+                User u = user.get();
+                
+                String defaultProfilePic = "https://" + bucketName + ".s3.amazonaws.com/profile_pictures/" + "default_photo_pgram.png";
+
+                if(u.getProfilePicturePath() != null && u.getProfilePicturePath().isEmpty() && !u.getProfilePicturePath().equals(defaultProfilePic)){
+                    String profilePicturePath = u.getProfilePicturePath();
+                    String deleteKey = profilePicturePath.replace("https://" + bucketName + ".s3.amazonaws.com/", "");
+                    software.amazon.awssdk.services.s3.model.DeleteObjectRequest deleteObjectRequest =
+                        software.amazon.awssdk.services.s3.model.DeleteObjectRequest.builder()
+                            .bucket(bucketName)
+                            .key(deleteKey)
+                            .build();
+                    s3client.deleteObject(deleteObjectRequest);
+                }
+                u.setProfilePicturePath("https://" + bucketName + ".s3.amazonaws.com/" + key);
+                u.setProfilePictureTime(LocalDateTime.now());
+                userRepository.save(u);
+            }
+            else{
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to upload profile picture");
+            }
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to upload profile picture");
+        }
+
+        // Returning the new path
+        if (user.isPresent()) {
+            Map<String, String> response = new HashMap<>();
+            response.put("profilePicturePath", user.get().getProfilePicturePath());
+            return ResponseEntity.ok(response);
+        } else {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to upload profile picture");
+        }
     }
 
     @PatchMapping("/users/self")
@@ -144,11 +227,18 @@ public class UserController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public ResponseEntity<?> deletePost(@AuthenticationPrincipal UserDetails userDetails, @PathVariable Long postId) {
         Post post = postRepository.findById(postId).orElseThrow(() -> new IllegalArgumentException("Post not found"));
+        String postPath = post.getImagePath();
+        String key = postPath.replace("https://" + bucketName + ".s3.amazonaws.com/", "");
+        software.amazon.awssdk.services.s3.model.DeleteObjectRequest deleteObjectRequest =
+            software.amazon.awssdk.services.s3.model.DeleteObjectRequest.builder()
+                .bucket(bucketName)
+                .key(key)
+                .build();
+        s3client.deleteObject(deleteObjectRequest);
         postRepository.delete(post);
         return ResponseEntity.noContent().build();
     }
 
-    // Merged login and verification check route
     @PostMapping("/login")
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<?> loginUser(@RequestBody LoginRequest loginRequest, HttpServletResponse response) {
@@ -222,7 +312,6 @@ public class UserController {
         Object principal = authentication.getPrincipal();
         String username = userDetails.getUsername();
         String password = userDetails.getPassword();
-        String bucketName = "pgram";
         String key = "images/" + username + "_" + System.currentTimeMillis() + "_drawing.png";
 
         try {
@@ -243,8 +332,6 @@ public class UserController {
         } catch (IOException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to upload image");
         }
-
-
         return new ResponseEntity<Map<String, String>>(response, HttpStatus.OK);
     }
 

@@ -14,11 +14,12 @@ public interface PostRepository extends JpaRepository<Post, Long> {
         String getUsername();
         String getImagePath();
         String getId();
+        String getProfilePicturePath();
     }
 
     List<Post> findByUser(User user);
 
-    @Query("SELECT u.name as username, p.id as id, p.imagePath as imagePath " +
+    @Query("SELECT u.name as username, p.id as id, p.imagePath as imagePath, u.profilePicturePath as profilePicturePath " +
     "FROM Post p JOIN p.user u " +
     "WHERE p.imagePath IS NOT NULL AND " +
     "p.imageTime = (SELECT MAX(p2.imageTime) FROM Post p2 WHERE p2.user = u AND p2.imagePath IS NOT NULL)" +

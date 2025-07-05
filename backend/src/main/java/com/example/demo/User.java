@@ -15,12 +15,11 @@ public class User{
     private String name;
     private String email;
     private String password;
-    @Column(name = "image_path")
-    private String imagePath;
-    @Column(name = "image_time")
-    private LocalDateTime imageTime;
+    @Column(name = "pp_path")
+    private String profilePicturePath;
+    @Column(name = "pp_time")
+    private LocalDateTime profilePictureTime;
     private String bio;
-
 
     public String getName(){
         return this.name;
@@ -38,12 +37,12 @@ public class User{
         return this.id;
     }
 
-    public String getImagePath(){
-        return this.imagePath;
+    public String getProfilePicturePath(){
+        return this.profilePicturePath;
     }
 
-    public LocalDateTime getImageTime() {
-        return this.imageTime;
+    public LocalDateTime getProfilePictureTime() {
+        return this.profilePictureTime;
     }
 
     public String getBio() {
@@ -66,20 +65,25 @@ public class User{
         this.id = newId;
     }
 
-    public void setImagePath(String newImagePath) {
-        this.imagePath = newImagePath;
+    public void setProfilePicturePath(String newProfilePicturePath) {
+        this.profilePicturePath = newProfilePicturePath;
     }
 
-    public void setImageTime(LocalDateTime newImageTime) {
-        this.imageTime = newImageTime;
+    public void setProfilePictureTime(LocalDateTime newProfilePictureTime) {
+        this.profilePictureTime = newProfilePictureTime;
     }
 
     public void setBio(String newBio) {
         this.bio = newBio;
     }
-
     @Override
     public String toString(){
-        return "User{" + "id=" + this.id + ", name='" + this.name + '\'' + ", password='" + this.password + '\'' + ", email='" + this.email + '\'' + '}';
+        return "User{" +
+                "id=" + this.id +
+                ", name='" + this.name + '\'' +
+                ", password='" + this.password + '\'' +
+                ", email='" + this.email + '\'' +
+                ", profilePicturePath='" + this.profilePicturePath + '\'' +
+                '}';
     }
 }

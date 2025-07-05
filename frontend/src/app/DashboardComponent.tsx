@@ -3,6 +3,7 @@ import { useNavigate, Link} from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { error } from 'console';
 import InfiniteScroll from 'react-infinite-scroll-component';
+import { redirect } from 'next/dist/server/api-utils';
 
 
 interface DrawComponentProps {
@@ -10,20 +11,41 @@ interface DrawComponentProps {
     imagePath: string;
     postId: number;
     deleteable: boolean;
+    profilePicturePath: string;
     onDelete?: (postId: number) => void;
+    onPFP: boolean;
 }
 
-const DrawComponent: React.FC<DrawComponentProps> = ({ username, imagePath, postId, deleteable, onDelete }) => {
+const DrawComponent: React.FC<DrawComponentProps> = ({ username, imagePath, postId, profilePicturePath, deleteable, onDelete, onPFP}) => {
     const [showOptions, setShowOptions] = useState<boolean | "deleted">(false);
+    const navigate = useNavigate();
 
     const handleOptionsClick = () => {
         setShowOptions((prev) => !prev);
     };
 
+    const redirectToProfile = (username: string) => {
+        navigate(`/profile/${username}`)
+    }
+        
+
+
     return (
         <div className="relative">
             <div className="flex items-center justify-between mb-2">
-                <h1 className='text-black font-bold'>{username}</h1>
+                <div className="flex items-center space-x-3">
+                    {!onPFP && <img
+                        src={profilePicturePath}
+                        style={{ width: 100, height: 100, borderRadius: '50%', objectFit: 'cover', cursor: 'pointer' }}
+                        onClick={() => redirectToProfile(username)}
+                    />}
+                    <h1
+                        className="text-black font-bold hover:underline text-4xl"
+                        onClick={() => redirectToProfile(username)}
+                    >
+                        {username}
+                    </h1>
+                </div>
                 {deleteable && (
                     <div className="relative">
                         <button
@@ -89,12 +111,14 @@ function DashboardComponent(){
         username: string; 
         imagePath: string;
         id: string;
+        profilePicturePath: string;
     }
     const [pageNum, setPageNum] = useState(-1);
     const [dataAvailable, setDataAvailable] = useState(true);
     const [posts, setPosts] = useState<Post[]>([]);
     const navigate = useNavigate();
     const [userLoggedIn, setUserLoggedIn] = useState("");
+    const [focusedPost, setFocusedPost] = useState(null);
 
 
     const handleDeletePost = (postId: number) => {
@@ -106,7 +130,7 @@ function DashboardComponent(){
     }
 
     const sendToProfile = () => {
-        navigate('/profile');
+        navigate(`/profile/${userLoggedIn}`);
     }
 
     function signOut(){
@@ -141,8 +165,7 @@ function DashboardComponent(){
             if(!resp.ok){
                 throw new Error("User not authenticated!");
             }
-            let result = (resp.json());
-            return result;
+            return resp.json();
         })
         .catch((error) => {
             navigate('/');
@@ -281,17 +304,46 @@ function DashboardComponent(){
             >
                 <div className="bg-white min-h-screen grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 p-4">
                     {posts.map((post, index) => (
-                        <div key={index} className="border rounded-lg shadow-md p-4 bg-gray-100 h-[100%] w-[90%]">
+                        <div
+                            key={index}
+                            className="border rounded-lg shadow-md p-4 bg-gray-100 hover:bg-gray-500 h-[50%] w-[90%]"
+                            onClick={() => setFocusedPost(post)}
+                            style={{ cursor: 'pointer' }}
+                        >
                             <DrawComponent
                                 username={post.username}
                                 imagePath={post.imagePath}
                                 postId={Number(post.id)}
+                                profilePicturePath={post.profilePicturePath}
                                 deleteable={userLoggedIn === post.username}
                                 onDelete={handleDeletePost}
+                                onPFP={false}
                             />
                         </div>
                     ))}
                 </div>
+
+                {focusedPost && (
+                    <div className="fixed inset-0 flex items-center justify-center bg-white bg-opacity-60 z-50 h-full w-full"
+                    onClick={e => {
+                        if (e.target === e.currentTarget) {
+                            setFocusedPost(null);
+                        }
+                    }}>
+                        <div className="bg-grey-100 rounded-lg p-8 shadow-lg max-w-xl max-h-xl w-full relative">
+                            <DrawComponent
+                                username={focusedPost.username}
+                                imagePath={focusedPost.imagePath}
+                                profilePicturePath={focusedPost.profilePicturePath}
+                                postId={Number(focusedPost.id)}
+                                deleteable={userLoggedIn === focusedPost.username}
+                                onDelete={handleDeletePost}
+                                onPFP={false}
+                            />
+                        </div>
+                    </div>
+                )}
+
             </InfiniteScroll>
         </>
     );  
