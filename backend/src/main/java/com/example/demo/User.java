@@ -76,9 +76,14 @@ public class User{
     public void setBio(String newBio) {
         this.bio = newBio;
     }
-
     @Override
     public String toString(){
-        return "User{" + "id=" + this.id + ", name='" + this.name + '\'' + ", password='" + this.password + '\'' + ", email='" + this.email + '\'' + '}';
+        return "User{" +
+                "id=" + this.id +
+                ", name='" + this.name + '\'' +
+                ", password='" + this.password + '\'' +
+                ", email='" + this.email + '\'' +
+                ", profilePicturePath='" + this.profilePicturePath + '\'' +
+                '}';
     }
 }

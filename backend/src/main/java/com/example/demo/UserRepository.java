@@ -13,12 +13,13 @@ public interface UserRepository extends JpaRepository<User, Long> {
         String getUsername();
         String getBio();
         String getImagePath();
+        String getProfilePicturePath();
     }
 
     Optional<User> findByName(String name);
     Optional<User> findByEmail(String email);
 
-    @Query("SELECT u.name as username, u.bio as bio, " +
+    @Query("SELECT u.name as username, u.bio as bio, u.profilePicturePath as profilePicturePath," +
            "(SELECT p.imagePath FROM Post p WHERE p.user = u AND p.imagePath IS NOT NULL ORDER BY p.imageTime DESC LIMIT 1) as imagePath " +
            "FROM User u WHERE u = :user")
     Optional<GetUserInfo> GetUserInfo(@Param("user") User user);

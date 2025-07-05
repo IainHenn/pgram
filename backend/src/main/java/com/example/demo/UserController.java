@@ -113,6 +113,7 @@ public class UserController {
     public ResponseEntity<?> fetchProfile(@PathVariable String username){
         Optional<User> user = userRepository.findByName(username);
         if(user.isPresent()){
+            System.out.println(user.toString());
             return ResponseEntity.ok(userRepository.GetUserInfo(user.get()));
         } else { 
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");

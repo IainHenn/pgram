@@ -13,6 +13,7 @@ const ProfileComponent: React.FC = () => {
     const [self, isSelf] = useState(false);
     const [selfUsername, setSelfUsername] = useState('');
     const [usernameInURL, setUsernameInURL] = useState('');
+    const [profilePicturePath, setProfilePicturePath] = useState('');
 
     const handleBioChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
         console.log(event.target.value);
@@ -106,6 +107,7 @@ const ProfileComponent: React.FC = () => {
                 setUsername(data.username);
                 setBio(data.bio);
                 setImagePath(data.imagePath);
+                setProfilePicturePath(data.profilePicturePath);
                 isSelf(false);
             })
             .catch(() => {
@@ -169,6 +171,13 @@ const ProfileComponent: React.FC = () => {
                             alignItems: 'center',
                             padding: '1rem',
                         }}>
+                            <img
+                                src={profilePicturePath}
+                                alt="No PFP"
+                                className='mb-6'
+                                style={{ width: 400, height: 400, borderRadius: '50%', objectFit: 'cover', cursor: 'pointer' }}
+                            />
+
                             <label className="block text-black text-center">
                                 <span>username: </span>
                                 <input contentEditable className="outline outline-2 outline-gray-800 rounded-md m-2 mt-4 p-1" 
