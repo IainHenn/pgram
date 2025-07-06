@@ -36,13 +36,13 @@
 - Sign up, Login, Logout
 - JWT-based Authentication
 - Email verification
+- In memory rate limiting
 - Password reset via email
 
 ---
 
 ## 🚀 Planned Features
 - Redis caching
-- Rate limiting
 - Community creation and interaction
 - Likes / reactions
 ---
